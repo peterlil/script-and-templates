@@ -2,8 +2,8 @@
 
 
 # DSC
-#$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources") #PSDscResources
-
+#$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources", "xDSCResourceDesigner") #PSDscResources
+$moduleNames = @("xDSCResourceDesigner")
 #$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage")
 #$moduleNames = @("AzureRM.Storage")
 #$moduleNames = @("AzureRM.Compute")
@@ -16,7 +16,7 @@
 #$moduleNames = @("Microsoft.PowerShell.Utility")
 
 # Most common Azure
-$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "Azure", "MSOnline")
+#$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "Azure", "MSOnline")
 
 $moduleVersionList = @()
 ForEach ($moduleName in $moduleNames)
@@ -69,119 +69,120 @@ $a =@{Expression={$_.UpdateCmd};Label='UpdateCmd';width=80}
 $moduleVersionList | ft $a -Wrap
 
 
-
-Install-Module Azure
-
-Find-Module -Name Azure
-Get-Module -Name Azure -ListAvailable
-Update-Module -Name Azure -RequiredVersion 4.0.1 -Force
-
-
-
-
-
-
-Get-Module -ListAvailable
-# AzureRM.Profile
-
-
-
-# Update the modules that needs to be updated (continued from above)
-
-ForEach ($moduleName in $moduleNames)
-{
-    $currentModule = (Get-Module -Name $moduleName)
-    $newestModule = (Find-Module -Name $moduleName)
-
-    if ( $currentModule.Version -eq $newestModule.Version )
-    {
-        Write-Output $moduleName + " does not need an upgrade."
-    }
-    else
-    {
-        Write-Output $moduleName + " starting upgrade to " + $newestModule.Version + "."
-        Update-Module -Name $moduleName -Force
-    }
-
-}
-Get-Module
-Remove-Module -Name AzureRM.Profile
-Install-Module AzureRM.Compute -RequiredVersion 2.5.0 -Force
-Install-Module AzureRM.Network -RequiredVersion 3.4.0 -Force  
-Install-Module AzureRM.Storage -RequiredVersion 2.5.0 -Force 
-
-Install-Module AzureRM.Profile -RequiredVersion 2.5.0
-Install-Module AzureRM.Resources -RequiredVersion 3.5.0
-Install-Module Azure -RequiredVersion 3.4.0 -AllowClobber
-Install-Module AzureRM.Automation -RequiredVersion 2.5.0
-Install-Module AzureRM.Compute -RequiredVersion 2.5.0
-
-Get-Module -Name AzureRM.Profile -All
-Uninstall-Module -Name AzureRM.Profile -RequiredVersion 2.3.0
-Uninstall-Module -Name AzureRM.Resources -RequiredVersion 3.2.0
-Uninstall-Module -Name Azure -RequiredVersion 3.0.0
-Uninstall-Module -Name AzureRM.Automation -RequiredVersion 2.2.0
-
-#Name               Current Version Newest Version Needs upgrade
-#----               --------------- -------------- -------------
-#AzureRM.Profile    2.3.0           2.5.0                   True
-#AzureRM.Resources  3.3.0           3.5.0                   True
-#Azure              3.1.0           3.4.0                   True
-#AzureRM.Automation 2.3.0           2.5.0                   True
-
-Remove-Module -Name AzureRM.Profile
-Remove-Module -Name Azure
-Remove-Module -Name AzureRM.Resources
-Remove-Module -Name AzureRM.Storage
-
-Get-Module -Name AzureRM.Profile
-Find-Module -Name AzureRM.Profile -AllVersions
-Uninstall-Module -Name AzureRM.Profile -RequiredVersion 2.3.0
-Install-Module -Name AzureRM.Profile -RequiredVersion 2.2.0
-
-Uninstall-Module -Name AzureRM.Profile -RequiredVersion 2.2.0
-Uninstall-Module -Name AzureRM.Storage -RequiredVersion 2.3.0
-Uninstall-Module -Name AzureRM.Resources -RequiredVersion 3.2.0
-Uninstall-Module -Name AzureRM.Automation -RequiredVersion 2.2.0
-Uninstall-Module -Name Azure -RequiredVersion 3.0.0
-
-
-Install-Module -Name AzureRM.Profile
-Install-Module -Name AzureRM.Storage -AllowClobber
-Install-Module -Name AzureRM.Resources -AllowClobber
-Install-Module -Name AzureRM.Automation -AllowClobber
-Install-Module -Name AzureRM.Compute -AllowClobber
-
-Install-Module -Name Azure -AllowClobber
-
-
-Find-Module -Name AzureRm.Storage -AllVersions
-
-Get-Module Azure* -ListAvailable
-Get-Module Azure* -ListAvailable | Uninstall-Module
-
-Uninstall-Module Azure
-Uninstall-Module AzureRm
-Uninstall-Module Azure.Storage
-
-Login-AzureRmAccount
-$subscriptionId = 
-    ( Get-AzureRmSubscription |
-        Out-GridView `
-          -Title "Select an Azure Subscription …" `
-          -PassThru
-    ).SubscriptionId
-
-Get-AzureRmSubscription -SubscriptionId $subscriptionId | Select-AzureRmSubscription
-Get-AzureRmStorageAccount
-
-Install-Module AzureRm
-Install-Module Azure -AllowClobber
-
-
-
-
-Uninstall-Module AzureRM.Compute -RequiredVersion 2.5.0 -Force
-
-Uninstall-Module AzureRM.Compute -Force
-Install-Module AzureRM.Network -RequiredVersion 3.5.0 -Force -AllowClobber
+#
+#Install-Module Azure
+#
+#Find-Module -Name Azure
+#Get-Module -Name Azure -ListAvailable
+#Update-Module -Name Azure -RequiredVersion 4.0.1 -Force
+#
+#
+#
+#
+#
+#
+#Get-Module -ListAvailable
+## AzureRM.Profile
+#
+#
+#
+## Update the modules that needs to be updated (continued from above)
+#
+#ForEach ($moduleName in $moduleNames)
+#{
+#    $currentModule = (Get-Module -Name $moduleName)
+#    $newestModule = (Find-Module -Name $moduleName)
+#
+#    if ( $currentModule.Version -eq $newestModule.Version )
+#    {
+#        Write-Output $moduleName + " does not need an upgrade."
+#    }
+#    else
+#    {
+#        Write-Output $moduleName + " starting upgrade to " + $newestModule.Version + "."
+#        Update-Module -Name $moduleName -Force
+#    }
+#
+#}
+#Get-Module
+#Remove-Module -Name AzureRM.Profile
+#Install-Module AzureRM.Compute -RequiredVersion 2.5.0 -Force
+#Install-Module AzureRM.Network -RequiredVersion 3.4.0 -Force  
+#Install-Module AzureRM.Storage -RequiredVersion 2.5.0 -Force 
+#
+#Install-Module AzureRM.Profile -RequiredVersion 2.5.0
+#Install-Module AzureRM.Resources -RequiredVersion 3.5.0
+#Install-Module Azure -RequiredVersion 3.4.0 -AllowClobber
+#Install-Module AzureRM.Automation -RequiredVersion 2.5.0
+#Install-Module AzureRM.Compute -RequiredVersion 2.5.0
+#
+#Get-Module -Name AzureRM.Profile -All
+#Uninstall-Module -Name AzureRM.Profile -RequiredVersion 2.3.0
+#Uninstall-Module -Name AzureRM.Resources -RequiredVersion 3.2.0
+#Uninstall-Module -Name Azure -RequiredVersion 3.0.0
+#Uninstall-Module -Name AzureRM.Automation -RequiredVersion 2.2.0
+#
+##Name               Current Version Newest Version Needs upgrade
+##----               --------------- -------------- -------------
+##AzureRM.Profile    2.3.0           2.5.0                   True
+##AzureRM.Resources  3.3.0           3.5.0                   True
+##Azure              3.1.0           3.4.0                   True
+##AzureRM.Automation 2.3.0           2.5.0                   True
+#
+#Remove-Module -Name AzureRM.Profile
+#Remove-Module -Name Azure
+#Remove-Module -Name AzureRM.Resources
+#Remove-Module -Name AzureRM.Storage
+#
+#Get-Module -Name AzureRM.Profile
+#Find-Module -Name AzureRM.Profile -AllVersions
+#Uninstall-Module -Name AzureRM.Profile -RequiredVersion 2.3.0
+#Install-Module -Name AzureRM.Profile -RequiredVersion 2.2.0
+#
+#Uninstall-Module -Name AzureRM.Profile -RequiredVersion 2.2.0
+#Uninstall-Module -Name AzureRM.Storage -RequiredVersion 2.3.0
+#Uninstall-Module -Name AzureRM.Resources -RequiredVersion 3.2.0
+#Uninstall-Module -Name AzureRM.Automation -RequiredVersion 2.2.0
+#Uninstall-Module -Name Azure -RequiredVersion 3.0.0
+#
+#
+#Install-Module -Name AzureRM.Profile
+#Install-Module -Name AzureRM.Storage -AllowClobber
+#Install-Module -Name AzureRM.Resources -AllowClobber
+#Install-Module -Name AzureRM.Automation -AllowClobber
+#Install-Module -Name AzureRM.Compute -AllowClobber
+#
+#Install-Module -Name Azure -AllowClobber
+#
+#
+#Find-Module -Name AzureRm.Storage -AllVersions
+#
+#Get-Module Azure* -ListAvailable
+#Get-Module Azure* -ListAvailable | Uninstall-Module
+#
+#Uninstall-Module Azure
+#Uninstall-Module AzureRm
+#Uninstall-Module Azure.Storage
+#
+#Login-AzureRmAccount
+#$subscriptionId = 
+#    ( Get-AzureRmSubscription |
+#        Out-GridView `
+#          -Title "Select an Azure Subscription …" `
+#          -PassThru
+#    ).SubscriptionId
+#
+#Get-AzureRmSubscription -SubscriptionId $subscriptionId | Select-AzureRmSubscription
+#Get-AzureRmStorageAccount
+#
+#Install-Module AzureRm
+#Install-Module Azure -AllowClobber
+#
+#
+#
+#
+#Uninstall-Module AzureRM.Compute -RequiredVersion 2.5.0 -Force
+#
+#Uninstall-Module AzureRM.Compute -Force
+#Install-Module AzureRM.Network -RequiredVersion 3.5.0 -Force -AllowClobber
+#

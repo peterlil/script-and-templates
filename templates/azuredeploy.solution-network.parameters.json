@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "solutionNwName": { "value": "SolutionVnet" },
+    "solutionNwPrefix": { "value": "10.1.0.0/16" },
+    "solutionNwSubnet1Name": { "value": "GatewaySubnet" },
+    "solutionNwSubnet2Name": { "value": "Backend" },
+    "solutionNwSubnet3Name": { "value": "Middleware" },
+    "solutionNwSubnet4Name": { "value": "Frontend" },
+    "solutionNwSubnet1Prefix": { "value": "10.1.0.0/24" },
+    "solutionNwSubnet2Prefix": { "value": "10.1.1.0/24" },
+    "solutionNwSubnet3Prefix": { "value": "10.1.2.0/24" },
+    "solutionNwSubnet4Prefix": { "value": "10.1.3.0/24" }
+  }
+}

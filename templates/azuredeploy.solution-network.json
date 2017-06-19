@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "solutionNwName": { "type": "string" },
+    "solutionNwPrefix": { "type": "string" },
+    "solutionNwSubnet1Name": { "type": "string" },
+    "solutionNwSubnet2Name": { "type": "string" },
+    "solutionNwSubnet3Name": { "type": "string" },
+    "solutionNwSubnet4Name": { "type": "string" },
+    "solutionNwSubnet1Prefix": { "type": "string" },
+    "solutionNwSubnet2Prefix": { "type": "string" },
+    "solutionNwSubnet3Prefix": { "type": "string" },
+    "solutionNwSubnet4Prefix": { "type": "string" }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "[parameters('solutionNwName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "[parameters('solutionNwName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('solutionNwPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('solutionNwSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('solutionNwSubnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[parameters('solutionNwSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('solutionNwSubnet2Prefix')]"
+            }
+          },
+          {
+            "name": "[parameters('solutionNwSubnet3Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('solutionNwSubnet3Prefix')]"
+            }
+          },
+          {
+            "name": "[parameters('solutionNwSubnet4Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('solutionNwSubnet4Prefix')]"
+            }
+          }
+        ]
+      }
+    }],
+  "outputs": {}
+}

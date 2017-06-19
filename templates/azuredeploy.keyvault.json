@@ -1,0 +1,85 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "keyvaultname": {
+      "type": "string"
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard",
+        "standard",
+        "Premium",
+        "premium"
+      ],
+      "metadata": {
+        "description": "SKU for the vault"
+      }
+    },
+    "objectIdOfUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Object ID of the user who should become KeyVault manager."
+      }
+    },
+    "enabledForDeployment": {
+      "type": "bool",
+      "defaultValue": true
+    },
+    "enabledForTemplateDeployment": {
+      "type": "bool",
+      "defaultValue": true
+    },
+    "enabledForDiskEncryption": {
+      "type": "bool",
+      "defaultValue": true
+    }
+  },
+  "variables": {
+    "accessPolicies": [
+      {
+        "objectId": "[parameters('objectIdOfUser')]",
+        "tenantId": "[subscription().tenantId]",
+        "permissions": {
+          "keys": [
+            "Get",
+            "List",
+            "Update",
+            "Create",
+            "Import",
+            "Delete",
+            "Backup",
+            "Restore"
+          ],
+          "secrets": [
+            "All"
+          ],
+          "certificates": [
+            "All"
+          ]
+        }
+      }
+      ]
+  },
+    "resources": [
+        {
+            "apiVersion": "2015-06-01",
+            "name": "[parameters('keyvaultname')]",
+            "location": "[resourceGroup().location]",
+            "type": "Microsoft.KeyVault/vaults",
+          "properties": {
+            "enabledForDeployment": "[parameters('enabledForDeployment')]",
+            "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
+            "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
+            "accessPolicies": "[variables('accessPolicies')]",
+            "tenantId": "[subscription().tenantId]",
+            "sku": {
+              "name": "[parameters('sku')]",
+              "family": "A"
+            }
+          }
+        }
+    ]
+}
