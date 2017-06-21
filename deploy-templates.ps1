@@ -1,22 +1,21 @@
 
 Login-Pat
 
-$Location = 'West Europe'
-$ResourceGroupName = 'TestWE1'
-$DeployStorageAccount = 'peterlildeploywe'
+$Location = 'North Europe'
+$ResourceGroupName = 'TestNE1'
+$DeployStorageAccount = 'peterlildeployne'
 $aadClientSecret = '4raXaxqqeok8DruPrz7RuzREzubR3cut'
 $aadAppDisplayName = "app-for-vm-encryption-$ResourceGroupName"
 $vmEncryptionKeyName = 'vm-encryption-key'
 $aadClientId = ''
 $aadServicePrincipalId = ''
 $currentUserObjectId = ''
-$vmName = 'vm1'
+$vmName = 'vm2'
+$keyVaultName = 'testkvwe'
 
 
 Set-Location c:\src\github\peterlil\script-and-templates 
 #Get hold of the JSON parameters
-$Tier0NwParams = ((Get-Content -Raw .\templates\azuredeploy.keyvault.parameters.json) | ConvertFrom-Json)
-$keyVaultName = $Tier0NwParams.parameters.keyVaultName.value
 $SolutionNetworkParams = ((Get-Content -Raw .\templates\azuredeploy.solution-network.parameters.json) | ConvertFrom-Json)
 $solutionNwName = $SolutionNetworkParams.parameters.solutionNwName.value
 $solutionSubnetName = $SolutionNetworkParams.parameters.solutionNwSubnet3Name.value
@@ -75,8 +74,8 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -replace "#adminusername#", $userName `
     -replace "#keyvaultname#", $keyVaultName) `
     -replace "#keyvaultresourcegroup#", $ResourceGroupName `
-    -replace "#aadClientID#", $aadClientId | `
-    -replace "#aadClientSecret#", $aadClientSecret
+    -replace "#aadClientID#", $aadClientId `
+    -replace "#aadClientSecret#", $aadClientSecret | `
     Out-File $tempParameterFile
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
     -TemplateFile .\templates\azuredeploy.standalone-vm.json -TemplateParametersFile $tempParameterFile 
