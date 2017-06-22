@@ -2,7 +2,7 @@
 Login-Pat
 
 $Location = 'North Europe'
-$ResourceGroupName = 'TestNE1'
+$ResourceGroupName = 'TestSqlNE1'
 $DeployStorageAccount = 'peterlildeployne'
 $aadClientSecret = '4raXaxqqeok8DruPrz7RuzREzubR3cut'
 $aadAppDisplayName = "app-for-vm-encryption-$ResourceGroupName"
@@ -10,8 +10,8 @@ $vmEncryptionKeyName = 'vm-encryption-key'
 $aadClientId = ''
 $aadServicePrincipalId = ''
 $currentUserObjectId = ''
-$vmName = 'vm2'
-$keyVaultName = 'testkvwe'
+$vmName = 'sql1ne'
+$keyVaultName = 'testsqlkvne'
 
 
 Set-Location c:\src\github\peterlil\script-and-templates 
@@ -22,7 +22,7 @@ $solutionSubnetName = $SolutionNetworkParams.parameters.solutionNwSubnet3Name.va
 
 # Get the ObjectId of current user
 $Sessions = Get-PSSession | Where-Object { $_.ConfigurationName -eq 'Microsoft.Exchange'}
-$cred = Get-Credential
+$cred = Get-Credential -Message 'Enter the credentials for AAD'
 if( $Sessions ){
     if ($Sessions -is [system.array] ) {
         $Session = $Sessions[0]
@@ -64,7 +64,7 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -keyVaultResourceGroupName $ResourceGroupName -vmEncryptionKeyName $vmEncryptionKeyName `
     -appDisplayName $aadAppDisplayName -aadClientId ([ref]$aadClientId) -aadServicePrincipalId ([ref]$aadServicePrincipalId)
 
-# Deploy a VM
+# Deploy a standalone Windows VM
 $userName = Read-Host 'Type admin user name:'
 $tempParameterFile = [System.IO.Path]::GetTempFileName()
 ((Get-Content -Path .\templates\azuredeploy.standalone-vm.parameters.json) `
@@ -79,10 +79,20 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     Out-File $tempParameterFile
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
     -TemplateFile .\templates\azuredeploy.standalone-vm.json -TemplateParametersFile $tempParameterFile 
-    
-    
-    `
-    -DSCSourceFolder .\DSC
 
--UploadArtifacts -StorageAccountName $DeployStorageAccount -StorageContainerName "$($DeployStorageAccount)-stageartifacts" `
-    
+
+# Deploy a SQL dev VM
+$userName = Read-Host 'Type admin user name:'
+$tempParameterFile = [System.IO.Path]::GetTempFileName()
+((Get-Content -Path .\templates\azuredeploy.standalone-sql-vm.parameters.json) `
+    -replace "#vmname#", $vmName `
+    -replace "#vnetname#", $solutionNwName `
+    -replace "#subnetname#", $solutionSubnetName `
+    -replace "#adminusername#", $userName `
+    -replace "#keyvaultname#", $keyVaultName) `
+    -replace "#keyvaultresourcegroup#", $ResourceGroupName `
+    -replace "#aadClientID#", $aadClientId `
+    -replace "#aadClientSecret#", $aadClientSecret | `
+    Out-File $tempParameterFile
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
+    -TemplateFile .\templates\azuredeploy.standalone-sql-vm.json -TemplateParametersFile $tempParameterFile 
