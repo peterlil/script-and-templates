@@ -72,10 +72,10 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -replace "#vnetname#", $solutionNwName `
     -replace "#subnetname#", $solutionSubnetName `
     -replace "#adminusername#", $userName `
-    -replace "#keyvaultname#", $keyVaultName) `
+    -replace "#keyvaultname#", $keyVaultName `
     -replace "#keyvaultresourcegroup#", $ResourceGroupName `
     -replace "#aadClientID#", $aadClientId `
-    -replace "#aadClientSecret#", $aadClientSecret | `
+    -replace "#aadClientSecret#", $aadClientSecret ) | `
     Out-File $tempParameterFile
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
     -TemplateFile .\templates\azuredeploy.standalone-vm.json -TemplateParametersFile $tempParameterFile 
@@ -89,10 +89,23 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -replace "#vnetname#", $solutionNwName `
     -replace "#subnetname#", $solutionSubnetName `
     -replace "#adminusername#", $userName `
-    -replace "#keyvaultname#", $keyVaultName) `
+    -replace "#keyvaultname#", $keyVaultName `
     -replace "#keyvaultresourcegroup#", $ResourceGroupName `
     -replace "#aadClientID#", $aadClientId `
-    -replace "#aadClientSecret#", $aadClientSecret | `
+    -replace "#aadClientSecret#", $aadClientSecret) | `
     Out-File $tempParameterFile
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
     -TemplateFile .\templates\azuredeploy.standalone-sql-vm.json -TemplateParametersFile $tempParameterFile 
+
+
+# Deploy a Linux (CentOS) VM
+$userName = Read-Host 'Type admin user name:'
+$tempParameterFile = [System.IO.Path]::GetTempFileName()
+((Get-Content -Path .\templates\azuredeploy.standalone-linux-vm.parameters.json) `
+    -replace "#vmname#", $vmName `
+    -replace "#vnetname#", $solutionNwName `
+    -replace "#subnetname#", $solutionSubnetName `
+    -replace "#adminusername#", $userName ) | `
+    Out-File $tempParameterFile
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
+    -TemplateFile .\templates\azuredeploy.standalone-linux-vm.json -TemplateParametersFile $tempParameterFile 

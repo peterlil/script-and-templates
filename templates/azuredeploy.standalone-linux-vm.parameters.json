@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": { "value": "#vmname#" },
+    "publicDnsPrefix": { "value": "peterlil-#vmname#" },
+    "vmSize": {"value": "Standard_DS15_v2"},
+    "storageType": {"value": "Premium_LRS"},
+    "vnetName": { "value": "#vnetname#" },
+    "subnetName": { "value": "#subnetname#" },
+    "adminUserName": { "value": "#adminusername#" }
+  }
+}
