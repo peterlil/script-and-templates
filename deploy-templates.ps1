@@ -10,7 +10,7 @@ $vmEncryptionKeyName = 'vm-encryption-key'
 $aadClientId = ''
 $aadServicePrincipalId = ''
 $currentUserObjectId = ''
-$vmName = 'centos3'
+$vmName = 'debian'
 $keyVaultName = 'testsqlkvwe'
 
 
