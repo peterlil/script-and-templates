@@ -55,26 +55,54 @@ function Get-MyVmIp  {
 }
 
 function Get-MyVmStatus (
-    [string] $rgName,
-    [string] $vmName) {
+    [Parameter(Mandatory=$false)]
+    [string] $rgName = '',
+    [Parameter(Mandatory=$false)]
+    [string] $vmName = '') {
 
+    $vms = @()
+            
     if( [string]::IsNullOrEmpty($vmName) ) {
         if ( [string]::IsNullOrEmpty( $rgName ) ) {
-            $vms = Get-AzureRmVM -Status
+            Get-AzureRmVM | ForEach-Object {
+                $vms += Get-AzureRmVM -ResourceGroupName $_.ResourceGroupName -Name $_.Name -Status
+            }
         } else {
-            $vms = Get-AzureRmVM -ResourceGroupName $rgName -Status
+            Get-AzureRmVM | ForEach-Object {
+                if ($_.ResourceGroupName.ToLower() -eq $rgName.ToLower())
+                {
+                    $vms += Get-AzureRmVM -ResourceGroupName $_.ResourceGroupName -Name $_.Name -Status
+                }
+            }
         }
 
     } else {
         if ( [string]::IsNullOrEmpty( $rgName ) ) {
-            $vms = Get-AzureRmVM -Name $vmName -Status
+            Get-AzureRmVM | ForEach-Object {
+                if ($_.Name.ToLower() -eq $vmName.ToLower())
+                {
+                    $vms += Get-AzureRmVM -ResourceGroupName $_.ResourceGroupName -Name $_.Name -Status
+                }
+            }
         } else {
-            $vms = Get-AzureRmVM -ResourceGroupName $rgName -Name $vmName -Status
+            $vms += Get-AzureRmVM -ResourceGroupName $rgName -Name $vmName -Status
         }
     }
     
     if( $vms.GetType().Name -eq 'Object[]' ) {
-        $vms #| Format-Table 
+        $result = @()
+        $vms | ForEach-Object {
+            $PowerState = ($_ | `
+                Select-Object Name -ExpandProperty Statuses | `
+                Where-Object {$_.Code -like '*PowerState*'} | `
+                Select-Object @{l='PowerState';e={$_.Code.Split('/')[1]}})
+            $record = New-Object -typename System.Object
+            $record | add-Member -memberType noteProperty -name Name -Value $_.Name
+            $record | add-Member -memberType noteProperty -name ResourceGroupName -Value $_.ResourceGroupName
+            $record | add-Member -memberType noteProperty -name PowerState -Value $PowerState.PowerState
+            $result += $record
+        } 
+        $result | Format-Table *
     } else {
         $vms | `
             Select-Object Name -ExpandProperty Statuses | `

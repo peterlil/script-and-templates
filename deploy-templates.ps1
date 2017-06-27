@@ -1,17 +1,17 @@
 
 Login-Pat
 
-$Location = 'North Europe'
-$ResourceGroupName = 'TestSqlNE1'
-$DeployStorageAccount = 'peterlildeployne'
+$Location = 'West Europe'
+$ResourceGroupName = 'LinuxCourseWE3'
+$DeployStorageAccount = 'peterlildeploywe'
 $aadClientSecret = '4raXaxqqeok8DruPrz7RuzREzubR3cut'
 $aadAppDisplayName = "app-for-vm-encryption-$ResourceGroupName"
 $vmEncryptionKeyName = 'vm-encryption-key'
 $aadClientId = ''
 $aadServicePrincipalId = ''
 $currentUserObjectId = ''
-$vmName = 'sql1ne'
-$keyVaultName = 'testsqlkvne'
+$vmName = 'centos3'
+$keyVaultName = 'testsqlkvwe'
 
 
 Set-Location c:\src\github\peterlil\script-and-templates 
@@ -98,7 +98,7 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -TemplateFile .\templates\azuredeploy.standalone-sql-vm.json -TemplateParametersFile $tempParameterFile 
 
 
-# Deploy a Linux (CentOS) VM
+# Deploy a Linux VM
 $userName = Read-Host 'Type admin user name:'
 $tempParameterFile = [System.IO.Path]::GetTempFileName()
 ((Get-Content -Path .\templates\azuredeploy.standalone-linux-vm.parameters.json) `
