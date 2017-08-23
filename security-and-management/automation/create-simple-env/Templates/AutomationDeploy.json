@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"automationAccountName": {
+			"defaultValue": "DefaultAutomationAccountName",
+			"type": "string"
+		},
+		"automationAccountSkuName": {
+			"defaultValue": "Free",
+			"type": "string"
+		}
+	},
+	"variables": {
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Automation/automationAccounts",
+			"name": "[parameters('automationAccountName')]",
+			"apiVersion": "2015-10-31",
+			"location": "westeurope",
+			"properties": {
+				"sku": {
+					"name": "[parameters('automationAccountSkuName')]"
+				}
+			},
+			"resources": [],
+			"dependsOn": []
+		}
+	],
+	"outputs": {
+	}
+}

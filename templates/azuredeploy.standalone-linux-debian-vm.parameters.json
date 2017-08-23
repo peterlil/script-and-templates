@@ -8,6 +8,9 @@
     "storageType": {"value": "Premium_LRS"},
     "vnetName": { "value": "#vnetname#" },
     "subnetName": { "value": "#subnetname#" },
-    "adminUserName": { "value": "#adminusername#" }
+    "adminUserName": { "value": "#adminusername#" },
+    "publisher": {"value": "credativ"},
+    "offer": {"value": "Debian"},
+    "sku": {"value": "9"}
   }
 }

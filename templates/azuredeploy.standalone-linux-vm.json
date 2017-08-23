@@ -4,6 +4,9 @@
   "parameters": {
     "vmName": { "type": "string" },
     "publicDnsPrefix": { "type": "string" },
+    "publisher": {"type": "string"},
+    "offer": {"type": "string"},
+    "sku": {"type":"string"},
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_DS2_V2",
@@ -192,9 +195,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "credativ",
-            "offer": "Debian",
-            "sku": "9",
+            "publisher": "[parameters('publisher')]",
+            "offer": "[parameters('offer')]",
+            "sku": "[parameters('sku')]",
             "version": "latest"
           },
           "osDisk": {

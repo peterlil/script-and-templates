@@ -3,8 +3,8 @@
 
 # DSC
 #$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources", "xDSCResourceDesigner") #PSDscResources
-$moduleNames = @("xDSCResourceDesigner")
-#$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage")
+#$moduleNames = @("xDSCResourceDesigner")
+$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "AzureRM.OperationalInsights", "MSOnline", "Azure", "AzureAD")
 #$moduleNames = @("AzureRM.Storage")
 #$moduleNames = @("AzureRM.Compute")
 #$moduleNames = @("AzureRM.Resources")
@@ -14,6 +14,7 @@ $moduleNames = @("xDSCResourceDesigner")
 #$moduleNames = @("Azure")
 #$moduleNames = @("MSOnline")
 #$moduleNames = @("Microsoft.PowerShell.Utility")
+#$moduleNames = @("AzureAD")
 
 # Most common Azure
 #$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "Azure", "MSOnline")

@@ -10,7 +10,7 @@ $vmEncryptionKeyName = 'vm-encryption-key'
 $aadClientId = ''
 $aadServicePrincipalId = ''
 $currentUserObjectId = ''
-$vmName = 'debian'
+$vmName = 'centos4'
 $keyVaultName = 'testsqlkvwe'
 
 
@@ -98,10 +98,10 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -TemplateFile .\templates\azuredeploy.standalone-sql-vm.json -TemplateParametersFile $tempParameterFile 
 
 
-# Deploy a Linux VM
+# Deploy a centos Linux VM
 $userName = Read-Host 'Type admin user name:'
 $tempParameterFile = [System.IO.Path]::GetTempFileName()
-((Get-Content -Path .\templates\azuredeploy.standalone-linux-vm.parameters.json) `
+((Get-Content -Path .\templates\azuredeploy.standalone-linux-centos-vm.parameters.json) `
     -replace "#vmname#", $vmName `
     -replace "#vnetname#", $solutionNwName `
     -replace "#subnetname#", $solutionSubnetName `

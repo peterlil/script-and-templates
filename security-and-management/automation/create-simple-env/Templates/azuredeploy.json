@@ -1,0 +1,42 @@
+﻿{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		// Parameters for deployment management
+		"_artifactsLocation": {
+			"type": "string"
+		},
+		"_artifactsLocationSasToken": {
+			"type": "securestring"
+		},
+		// Parameters for automation account
+		"automationAccountName": {
+			"defaultValue": "DefaultAutomationAccountName",
+			"type": "string"
+		}
+	},
+	"variables": {
+		"AutomationDeployTemplateFolder": "Templates",
+		"AutomationDeployTemplateFileName": "AutomationDeploy.json"
+	},
+	"resources": [
+		{
+			"name": "AutomationDeploy",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2015-01-01",
+			"dependsOn": [],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('_artifactsLocation'), '/', variables('AutomationDeployTemplateFolder'), '/', variables('AutomationDeployTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"automationAccountName": { "value": "[parameters('automationAccountName')]" }
+				}
+			}
+		}
+	],
+	"outputs": {
+	}
+}
