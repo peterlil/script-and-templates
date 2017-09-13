@@ -1,0 +1,14 @@
+# List the names of the VMs in a resource group
+az vm list -g Test --query "[].name | {Names: join(', ', @)}"
+
+# List the os disk names for the vms in a resource group
+az vm list -g Test --query "[*].storageProfile[].osDisk[].name"
+
+# Detach an os disk - NO CAN DO! NEED TO DELETE THE VM FIRST!
+az vm disk detach --name "peterlil57_OsDisk_1_4b40e0412cb84d35b42e4fa77008598f" --resource-group Test --vm-name peterlil57
+
+# Delete a VM
+az vm delete --name peterlil57 --resource-group Test --yes
+
+
+
