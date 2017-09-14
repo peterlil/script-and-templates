@@ -39,7 +39,7 @@ $vmConfig = New-AzureRmVMConfig -VMName hackathonVm1 -VMSize Standard_DS2 | `
     Set-AzureRmVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer `
     -Skus 2016-Datacenter -Version latest | Add-AzureRmVMNetworkInterface -Id $nic.Id
 
-$vmConfig = Set-AzureRmVMOSDisk -VM $vmConfig -Name "hackathonVm1-osdisk" -StorageAccountType StandardLRS -CreateOption FromImage
+$vmConfig = Set-AzureRmVMOSDisk -VM $vmConfig -Name "hackathonVm1-osdisk" -StorageAccountType PremiumLRS -CreateOption FromImage
 
 New-AzureRmVM -ResourceGroupName RG-Workloads -Location westeurope -VM $vmConfig
 # NOTE: The warning message blow that appears is invalid, the disk is created using Standard storage, not Premium.
