@@ -10,5 +10,6 @@ az vm disk detach --name "peterlil57_OsDisk_1_4b40e0412cb84d35b42e4fa77008598f" 
 # Delete a VM
 az vm delete --name peterlil57 --resource-group Test --yes
 
-
+# attach a disk to a vm
+az vm disk attach --disk peterlil57_OsDisk_1_4b40e0412cb84d35b42e4fa77008598f --resource-group Test --vm-name peterlil56
 

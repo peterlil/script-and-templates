@@ -1,0 +1,1 @@
+﻿New-AzureRmKeyVault -VaultName 'HackathonKeyVault8998' -ResourceGroupName 'RG-Shared' -Location westeurope -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption
