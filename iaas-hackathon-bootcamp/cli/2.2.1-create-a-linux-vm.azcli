@@ -1,0 +1,19 @@
+#az vm image list -f RHEL -s "7.2" --all
+
+#{
+#    "offer": "RHEL",
+#    "publisher": "RedHat",
+#    "sku": "7.2",
+#    "urn": "RedHat:RHEL:7.2:7.2.2017090716",
+#    "version": "7.2.2017090716"
+#}
+
+# Get the id for the subnet, cut and paste it into the subnet-id parameter on the "az vm create" line.
+az network vnet subnet list --resource-group RG-Shared --vnet-name vnet-hackathon --query [].id
+
+az vm create --resource-group RG-Workloads --name HackathonVm1 --image RedHat:RHEL:7.2:7.2.2017090716 --os-disk-name "HackathonVm1-osdisk" \
+    --private-ip-address 10.100.0.5 --public-ip-address HackathonVm1Pip --public-ip-address-allocation static \
+    --public-ip-address-dns-name hkt98vm1 --size Standard_DS1_v2 --storage-sku Standard_LRS \
+    --subnet "<subnet id>" \
+    --authentication-type password --admin-username <username> --admin-password <password>
+

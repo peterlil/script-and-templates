@@ -1,0 +1,48 @@
+# Make up your own secret
+aadClientSecret="YourJediMindTricksDon'tWorkOnMe"
+
+#Give the application a name
+appName=VmCreatorAppHackathon2017
+
+# Set some variables
+keyvault_name=HackathonKeyVault8998
+vmEncryptionKeyName=VmEncryptionKey
+resouceGroup="RG-Workloads"
+vmName=HackathonVm1
+
+# Create the encryption key
+az keyvault key create --vault-name $keyvault_name --name $vmEncryptionKeyName --protection software
+read sp_id sp_password <<< $(az ad sp create-for-rbac --query [appId,password] -o tsv)
+
+# Echo the key password to save for later.
+echo $sp_password
+
+az keyvault set-policy --name $keyvault_name --spn $sp_id \
+    --key-permissions wrapKey \
+    --secret-permissions set
+
+read keyvault_id <<< $(az keyvault list --resource-group RG-Shared --query [].id -o tsv)
+
+# Get the key identifier (from the portal) ex: https://hackathonkeyvault8998.vault.azure.net/keys/VmEncryptionKey/0162b521c1294e5c8a2ca61c9b0a05bc
+key_id="<key id>"
+
+az vm encryption enable \
+    --resource-group $resouceGroup \
+    --name $vmName \
+    --aad-client-id $sp_id \
+    --aad-client-secret $sp_password \
+    --disk-encryption-keyvault $keyvault_id \
+    --key-encryption-key $vmEncryptionKeyName \
+    --key-encryption-keyvault $keyvault_id \
+    --volume-type all
+
+
+az vm encryption enable \
+    --resource-group $resouceGroup \
+    --name $vmName \
+    --aad-client-id $sp_id \
+    --aad-client-secret $sp_password \
+    --disk-encryption-keyvault $keyvault_id \
+    --key-encryption-key $key_id \
+    --key-encryption-keyvault $keyvault_id \
+    --volume-type all

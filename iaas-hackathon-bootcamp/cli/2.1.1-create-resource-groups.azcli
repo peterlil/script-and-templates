@@ -1,0 +1,3 @@
+# create the resource groups
+az group create --name RG-Shared --location westeurope
+az group create --name RG-Workloads --location westeurope

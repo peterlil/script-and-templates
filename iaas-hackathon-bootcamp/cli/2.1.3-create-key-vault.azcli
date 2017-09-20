@@ -1,0 +1,2 @@
+keyvault_name=HackathonKeyVault8998
+az keyvault create --name $keyvault_name --resource-group RG-Shared --location westeurope --enabled-for-deployment true --enabled-for-disk-encryption true --enabled-for-template-deployment true

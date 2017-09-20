@@ -1,0 +1,2 @@
+# Create the virtual network
+az network vnet create --name vnet-hackathon --resource-group RG-Shared --address-prefix 10.100.0.0/16 --subnet-name subnet-hackathon --subnet-prefix 10.100.0.0/24
