@@ -4,7 +4,7 @@
 # DSC
 #$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources", "xDSCResourceDesigner") #PSDscResources
 #$moduleNames = @("xDSCResourceDesigner")
-$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "AzureRM.OperationalInsights", "MSOnline", "Azure", "AzureAD")
+$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "AzureRM.OperationalInsights", "Azure", "MSOnline", "AzureAD")
 #$moduleNames = @("AzureRM.Storage")
 #$moduleNames = @("AzureRM.Compute")
 #$moduleNames = @("AzureRM.Resources")
