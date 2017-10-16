@@ -2,7 +2,7 @@
 Login-Pat
 
 $Location = 'West Europe'
-$ResourceGroupName = 'LinuxCourseWE3'
+$ResourceGroupName = 'SurveyTest'
 $DeployStorageAccount = 'peterlildeploywe'
 $aadClientSecret = '4raXaxqqeok8DruPrz7RuzREzubR3cut'
 $aadAppDisplayName = "app-for-vm-encryption-$ResourceGroupName"
@@ -10,11 +10,11 @@ $vmEncryptionKeyName = 'vm-encryption-key'
 $aadClientId = ''
 $aadServicePrincipalId = ''
 $currentUserObjectId = ''
-$vmName = 'centos4'
-$keyVaultName = 'testsqlkvwe'
+$vmName = 'gpuvmpeterlil1'
+$keyVaultName = 'mynewkv'
 
 
-Set-Location c:\src\github\peterlil\script-and-templates 
+Set-Location c:\src\github\peterlil\script-and-templates\ps 
 #Get hold of the JSON parameters
 $SolutionNetworkParams = ((Get-Content -Raw .\templates\azuredeploy.solution-network.parameters.json) | ConvertFrom-Json)
 $solutionNwName = $SolutionNetworkParams.parameters.solutionNwName.value
@@ -109,3 +109,19 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     Out-File $tempParameterFile
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
     -TemplateFile .\templates\azuredeploy.standalone-linux-vm.json -TemplateParametersFile $tempParameterFile 
+
+# Deploy a standalone Windows VM with 32 disks
+$userName = Read-Host 'Type admin user name:'
+$tempParameterFile = [System.IO.Path]::GetTempFileName()
+((Get-Content -Path .\templates\azuredeploy.standalone-vm-with-32-disks.parameters.json) `
+    -replace "#vmname#", $vmName `
+    -replace "#vnetname#", $solutionNwName `
+    -replace "#subnetname#", $solutionSubnetName `
+    -replace "#adminusername#", $userName `
+    -replace "#keyvaultname#", $keyVaultName `
+    -replace "#keyvaultresourcegroup#", $ResourceGroupName `
+    -replace "#aadClientID#", $aadClientId `
+    -replace "#aadClientSecret#", $aadClientSecret ) | `
+    Out-File $tempParameterFile
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
+    -TemplateFile .\templates\azuredeploy.standalone-vm-with-32-disks.json -TemplateParametersFile $tempParameterFile 
