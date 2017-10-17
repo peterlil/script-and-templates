@@ -1,10 +1,40 @@
+################################################################################
+### Initial checks and preparations
+################################################################################
 
-Login-Pat
+# Make sure we are in the script dir...
+$check = Get-Item -Path .\deploy-templates.ps1 -ErrorAction SilentlyContinue
+if(!$check) {
+    Write-Host "Error: The current directory needs to be the scripts directory. Terminating."
+    exit
+}
 
+################################################################################
+### Login to Azure. 
+################################################################################
+.\azure-ad\login-azurerm.ps1
+
+
+################################################################################
+### Set the variables for the script
+### TODO: Carefully go through each variable and change to appropriate
+###       values. 
+### NOTE: DO NOT CHECK IN CLIENT SECRET ANYWHERE
+################################################################################
+
+# Location of the resources that are to be provisioned
 $Location = 'West Europe'
+
+# Name of the resource group, which the resources will go into
 $ResourceGroupName = 'SurveyTest'
+
+# Name of a storage account used during deployment. Only necessary if you are 
+# using nested deployment templates or DSC. 
 $DeployStorageAccount = 'peterlildeploywe'
-$aadClientSecret = '4raXaxqqeok8DruPrz7RuzREzubR3cut'
+
+# Azure AD Application Client secret 
+$aadClientSecret = ''
+
 $aadAppDisplayName = "app-for-vm-encryption-$ResourceGroupName"
 $vmEncryptionKeyName = 'vm-encryption-key'
 $aadClientId = ''
@@ -14,7 +44,6 @@ $vmName = 'gpuvmpeterlil1'
 $keyVaultName = 'mynewkv'
 
 
-Set-Location c:\src\github\peterlil\script-and-templates\ps 
 #Get hold of the JSON parameters
 $SolutionNetworkParams = ((Get-Content -Raw .\templates\azuredeploy.solution-network.parameters.json) | ConvertFrom-Json)
 $solutionNwName = $SolutionNetworkParams.parameters.solutionNwName.value

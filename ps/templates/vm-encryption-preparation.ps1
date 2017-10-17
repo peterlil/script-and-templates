@@ -8,6 +8,21 @@ param(
 	[Parameter(Mandatory=$true)][ref] $aadServicePrincipalId
 )
 
+
+################################################################################
+### Prerequisites
+### You must have created an Azure Key Vault prior calling this command.
+################################################################################
+
+
+
+################################################################################
+### Background docs
+### Integrating applications with Azure Active Directory - 							https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-integrating-applications
+### Application and service principal objects in Azure Active Directory (Azure AD)-	https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-application-objects
+################################################################################
+
+
 ## STEP 1) CREATE A CLIENT ID IN AZURE AD
 # Create the Azure AD Application if it does not exist
 $azureAdApplication = Get-AzureRmADApplication -DisplayNameStartWith $appDisplayName
