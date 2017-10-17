@@ -2,7 +2,7 @@ param(
 	[Parameter(Mandatory=$true)][string] $aadClientSecret,
 	[Parameter(Mandatory=$true)][string] $keyVaultName,
 	[Parameter(Mandatory=$true)][string] $keyVaultResourceGroupName,
-	[Parameter(Mandatory=$true)][string] $vmEncryptionKeyName,
+	[Parameter(Mandatory=$true)][string] $keyEncryptionKeyName,
 	[Parameter(Mandatory=$true)][string] $appDisplayName,
 	[Parameter(Mandatory=$true)][ref] $aadClientId,
 	[Parameter(Mandatory=$true)][ref] $aadServicePrincipalId
@@ -13,7 +13,6 @@ param(
 ### Prerequisites
 ### You must have created an Azure Key Vault prior calling this command.
 ################################################################################
-
 
 
 ################################################################################
@@ -50,12 +49,12 @@ $rgname = $keyVaultResourceGroupName
 Set-AzureRmKeyVaultAccessPolicy -VaultName $keyVaultName -ServicePrincipalName $azureAdApplication.ApplicationId -PermissionsToKeys 'WrapKey' -PermissionsToSecrets 'Set' -ResourceGroupName $rgname
 Write-Host 'KeyVault access updated.'
 
-## STEP 3) Set up an encryption key if one does not exists.
+## STEP 3) Set up the key encryption key if one does not exists.
 $keyVaultKey = Get-AzureKeyVaultKey -VaultName $keyVaultName -Name $vmEncryptionKeyName
 if( !$keyVaultKey )
 {
-	Write-Host 'Creating KeyVault key.'
-	$keyVaultKey = Add-AzureKeyVaultKey -VaultName $keyVaultName -Name $vmEncryptionKeyName -Destination Software
+	Write-Host 'Creating key encryption key.'
+	$keyVaultKey = Add-AzureKeyVaultKey -VaultName $keyVaultName -Name $keyEncryptionKeyName -Destination Software
 }
 
 ## STEP 4) Set keyvault permissions - No need here since this was set in the ARM template

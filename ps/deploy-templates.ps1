@@ -32,23 +32,42 @@ $ResourceGroupName = 'SurveyTest'
 # using nested deployment templates or DSC. 
 $DeployStorageAccount = 'peterlildeploywe'
 
-# Azure AD Application Client secret 
-$aadClientSecret = ''
+# Name of the Azyre Key Vault that will be created
+$keyVaultName = 'mynewkv'
 
+# Azure AD Application Name, this must be unique within your tenant
 $aadAppDisplayName = "app-for-vm-encryption-$ResourceGroupName"
-$vmEncryptionKeyName = 'vm-encryption-key'
+
+# Azure AD Application Client secret. KEEP THIS OUT OF SOURCE CONTROL
+$aadClientSecret = '<YourJediMindTricksDoNotWorkOnMe>'
+
+# Name of the key used to encrypt the VMs
+#$vmEncryptionKeyName = 'vm-encryption-key'
+
+# Name of the key encryption key
+$keyEncryptionKeyName = 'vm-kek'
+
+# Name of the VM that will be created
+$vmName = 'gpuvmpeterlil2'
+
+# Declaration of runtime variables, they are populated by the script
 $aadClientId = ''
 $aadServicePrincipalId = ''
 $currentUserObjectId = ''
-$vmName = 'gpuvmpeterlil1'
-$keyVaultName = 'mynewkv'
 
+
+################################################################################
+### 
+################################################################################
 
 #Get hold of the JSON parameters
 $SolutionNetworkParams = ((Get-Content -Raw .\templates\azuredeploy.solution-network.parameters.json) | ConvertFrom-Json)
 $solutionNwName = $SolutionNetworkParams.parameters.solutionNwName.value
 $solutionSubnetName = $SolutionNetworkParams.parameters.solutionNwSubnet3Name.value
 
+################################################################################
+###
+################################################################################
 # Get the ObjectId of current user
 $Sessions = Get-PSSession | Where-Object { $_.ConfigurationName -eq 'Microsoft.Exchange'}
 $cred = Get-Credential -Message 'Enter the credentials for AAD'
@@ -72,11 +91,19 @@ Connect-MsolService -credential $cred
 $currentUserObjectId = (Get-MsolUser -UserPrincipalName $cred.UserName).ObjectId
 
 
+################################################################################
+###
+################################################################################
+
 # Create a virtual network for a solution
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
     -StorageAccountName $DeployStorageAccount -TemplateFile .\templates\azuredeploy.solution-network.json `
     -TemplateParametersFile .\templates\azuredeploy.solution-network.parameters.json
 
+
+################################################################################
+###
+################################################################################
 
 # Deploy a keyvault, first prepare the parameter file by replacing #keyvaultname# and #objectIdOfUser# with appropriate values
 $tempParameterFile = [System.IO.Path]::GetTempFileName()
@@ -90,7 +117,7 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
 
 # Prepare a keyvault for vm disk encryption
 .\templates\vm-encryption-preparation.ps1 -aadClientSecret $aadClientSecret -keyVaultName $keyVaultName `
-    -keyVaultResourceGroupName $ResourceGroupName -vmEncryptionKeyName $vmEncryptionKeyName `
+    -keyVaultResourceGroupName $ResourceGroupName -keyEncryptionKeyName $keyEncryptionKeyName `
     -appDisplayName $aadAppDisplayName -aadClientId ([ref]$aadClientId) -aadServicePrincipalId ([ref]$aadServicePrincipalId)
 
 # Deploy a standalone Windows VM
