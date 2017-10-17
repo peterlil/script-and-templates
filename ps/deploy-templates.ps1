@@ -32,7 +32,7 @@ $ResourceGroupName = 'SurveyTest'
 # using nested deployment templates or DSC. 
 $DeployStorageAccount = 'peterlildeploywe'
 
-# Name of the Azyre Key Vault that will be created
+# Name of the Azure Key Vault that will be created
 $keyVaultName = 'mynewkv'
 
 # Azure AD Application Name, this must be unique within your tenant
@@ -57,18 +57,16 @@ $currentUserObjectId = ''
 
 
 ################################################################################
-### 
+### Get hold of the JSON parameters for the network
 ################################################################################
 
-#Get hold of the JSON parameters
 $SolutionNetworkParams = ((Get-Content -Raw .\templates\azuredeploy.solution-network.parameters.json) | ConvertFrom-Json)
 $solutionNwName = $SolutionNetworkParams.parameters.solutionNwName.value
 $solutionSubnetName = $SolutionNetworkParams.parameters.solutionNwSubnet3Name.value
 
 ################################################################################
-###
+### Get the ObjectId of current user
 ################################################################################
-# Get the ObjectId of current user
 $Sessions = Get-PSSession | Where-Object { $_.ConfigurationName -eq 'Microsoft.Exchange'}
 $cred = Get-Credential -Message 'Enter the credentials for AAD'
 if( $Sessions ){
@@ -92,25 +90,24 @@ $currentUserObjectId = (Get-MsolUser -UserPrincipalName $cred.UserName).ObjectId
 
 
 ################################################################################
-###
+### Create a virtual network for the solution
 ################################################################################
-
-# Create a virtual network for a solution
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
     -StorageAccountName $DeployStorageAccount -TemplateFile .\templates\azuredeploy.solution-network.json `
     -TemplateParametersFile .\templates\azuredeploy.solution-network.parameters.json
 
-
 ################################################################################
-###
+### Deploy a keyvault, first prepare the parameter file by replacing 
+### #keyvaultname# and #objectIdOfUser# with values from the variables.
 ################################################################################
 
-# Deploy a keyvault, first prepare the parameter file by replacing #keyvaultname# and #objectIdOfUser# with appropriate values
+# Prepare the parameters file
 $tempParameterFile = [System.IO.Path]::GetTempFileName()
 ((Get-Content -Path .\templates\azuredeploy.keyvault.parameters.json) -replace "#keyvaultname#", $keyVaultName) `
     -replace "#objectIdOfUser#", $currentUserObjectId | `
     Out-File $tempParameterFile
 
+# Deploy
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
     -StorageAccountName $DeployStorageAccount -TemplateFile .\templates\azuredeploy.keyvault.json `
     -TemplateParametersFile $tempParameterFile
@@ -120,7 +117,13 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -keyVaultResourceGroupName $ResourceGroupName -keyEncryptionKeyName $keyEncryptionKeyName `
     -appDisplayName $aadAppDisplayName -aadClientId ([ref]$aadClientId) -aadServicePrincipalId ([ref]$aadServicePrincipalId)
 
-# Deploy a standalone Windows VM
+# Stop execution
+exit
+
+
+################################################################################
+### OPTION: Deploy a standalone Windows VM
+################################################################################
 $userName = Read-Host 'Type admin user name:'
 $tempParameterFile = [System.IO.Path]::GetTempFileName()
 ((Get-Content -Path .\templates\azuredeploy.standalone-vm.parameters.json) `
@@ -137,7 +140,9 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -TemplateFile .\templates\azuredeploy.standalone-vm.json -TemplateParametersFile $tempParameterFile 
 
 
-# Deploy a SQL dev VM
+################################################################################
+### OPTION: Deploy a SQL dev VM
+################################################################################
 $userName = Read-Host 'Type admin user name:'
 $tempParameterFile = [System.IO.Path]::GetTempFileName()
 ((Get-Content -Path .\templates\azuredeploy.standalone-sql-vm.parameters.json) `
@@ -154,7 +159,10 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -TemplateFile .\templates\azuredeploy.standalone-sql-vm.json -TemplateParametersFile $tempParameterFile 
 
 
-# Deploy a centos Linux VM
+
+################################################################################
+### OPTION: Deploy a centos Linux VM
+################################################################################
 $userName = Read-Host 'Type admin user name:'
 $tempParameterFile = [System.IO.Path]::GetTempFileName()
 ((Get-Content -Path .\templates\azuredeploy.standalone-linux-centos-vm.parameters.json) `
@@ -166,7 +174,10 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
     -TemplateFile .\templates\azuredeploy.standalone-linux-vm.json -TemplateParametersFile $tempParameterFile 
 
-# Deploy a standalone Windows VM with 32 disks
+
+################################################################################
+### OPTION: Deploy a standalone Windows VM with 32 disks
+################################################################################
 $userName = Read-Host 'Type admin user name:'
 $tempParameterFile = [System.IO.Path]::GetTempFileName()
 ((Get-Content -Path .\templates\azuredeploy.standalone-vm-with-32-disks.parameters.json) `
