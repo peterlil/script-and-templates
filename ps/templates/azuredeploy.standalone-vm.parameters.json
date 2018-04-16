@@ -4,7 +4,7 @@
   "parameters": {
     "vmName": { "value": "#vmname#" },
     "publicDnsPrefix": { "value": "peterlil-#vmname#" },
-    "vmSize": {"value": "Standard_DS15_v2"},
+    "vmSize": {"value": "Standard_DS2_v2"},
     "storageType": {"value": "Premium_LRS"},
     "vnetName": { "value": "#vnetname#" },
     "subnetName": { "value": "#subnetname#" },

@@ -50,7 +50,7 @@ Set-AzureRmKeyVaultAccessPolicy -VaultName $keyVaultName -ServicePrincipalName $
 Write-Host 'KeyVault access updated.'
 
 ## STEP 3) Set up the key encryption key if one does not exists.
-$keyVaultKey = Get-AzureKeyVaultKey -VaultName $keyVaultName -Name $vmEncryptionKeyName
+$keyVaultKey = Get-AzureKeyVaultKey -VaultName $keyVaultName -Name $keyEncryptionKeyName
 if( !$keyVaultKey )
 {
 	Write-Host 'Creating key encryption key.'

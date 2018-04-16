@@ -132,11 +132,25 @@
     "aadClientID": { "type": "string" },
     "aadClientSecret": { "type": "string" },
     "keyVaultName": { "type": "string" },
-    "keyVaultResourceGroup": { "type": "string" }
+    "keyVaultResourceGroup": { "type": "string" },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    }
   },
   "variables": {
     "nicName": "[concat(parameters('vmName'), 'Nic')]",
-    "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIp')]"
+    "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIp')]",
+    "DSCDiskConfArchiveFolder": "dsc-stripe-32-disks",
+    "DSCDiskConfArchiveFileName": "dsc-stripe-32-disks.zip"
   },
   "resources": [
     {
@@ -270,6 +284,37 @@
           "keyEncryptionKeyURL": {
             "value": ""
           }
+        }
+      }
+    },
+    {
+      "name": "Microsoft.Powershell.DSC",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ],
+      "tags": {
+        "displayName": "dsc-stripe-32-disks"
+      },
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.9",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "configuration": {
+            "url": "[concat(parameters('_artifactsLocation'), '/', variables('DSCDiskConfArchiveFolder'), '/', variables('DSCDiskConfArchiveFileName'))]",
+            "script": "dsc-stripe-32-disks.ps1",
+            "function": "Main"
+          },
+          "configurationArguments": {
+            "nodeName": "[variables('vmName')]"
+          }
+        },
+        "protectedSettings": {
+          "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]"
         }
       }
     }

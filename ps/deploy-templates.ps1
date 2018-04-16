@@ -6,7 +6,8 @@
 $check = Get-Item -Path .\deploy-templates.ps1 -ErrorAction SilentlyContinue
 if(!$check) {
     Write-Host "Error: The current directory needs to be the scripts directory. Terminating."
-    exit
+    #exit
+    break
 }
 
 ################################################################################
@@ -190,5 +191,12 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -replace "#aadClientID#", $aadClientId `
     -replace "#aadClientSecret#", $aadClientSecret ) | `
     Out-File $tempParameterFile
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
-    -TemplateFile .\templates\azuredeploy.standalone-vm-with-32-disks.json -TemplateParametersFile $tempParameterFile 
+.\Deploy-AzureResourceGroup.ps1 `
+    -ResourceGroupLocation $Location `
+    -ResourceGroupName $ResourceGroupName `
+    -UploadArtifacts `
+    -StorageAccountName $DeployStorageAccount `
+    -TemplateFile .\templates\azuredeploy.standalone-vm-with-32-disks.json `
+    -TemplateParametersFile $tempParameterFile `
+    -DSCSourceFolder 'dsc-stripe-32-disks'
+    
