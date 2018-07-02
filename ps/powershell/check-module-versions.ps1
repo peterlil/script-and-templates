@@ -5,6 +5,7 @@
 #$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources", "xDSCResourceDesigner") #PSDscResources
 #$moduleNames = @("xDSCResourceDesigner")
 $moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "AzureRM.OperationalInsights", "AzureRM.Insights", "Azure", "MSOnline", "AzureAD")
+$moduleNames = @("AzureRM.Billing")
 #$moduleNames = @("AzureRM.Storage")
 #$moduleNames = @("AzureRM.Compute")
 #$moduleNames = @("AzureRM.Resources")
