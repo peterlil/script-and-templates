@@ -1,3 +1,19 @@
+param(
+    # Name of the resource group, which the resources will go into
+    $ResourceGroupName,
+    # Name of the Azure Key Vault that will be created
+    $keyVaultName,
+    # Name of the VM that will be created
+    $vmName,
+    # Azure AD Application Client secret. KEEP THIS OUT OF SOURCE CONTROL
+    $aadClientSecret,
+    # Location of the resources that are to be provisioned
+    $Location = 'West Europe',
+    # Name of a storage account used during deployment. Only necessary if you are 
+    # using nested deployment templates or DSC. 
+    $DeployStorageAccount = 'peterlildeploywe'
+    
+)
 ################################################################################
 ### Initial checks and preparations
 ################################################################################
@@ -23,39 +39,16 @@ if(!$check) {
 ### NOTE: DO NOT CHECK IN CLIENT SECRET ANYWHERE
 ################################################################################
 
-# Location of the resources that are to be provisioned
-$Location = 'West Europe'
-
-# Name of the resource group, which the resources will go into
-$ResourceGroupName = 'SurveyTest'
-
-# Name of a storage account used during deployment. Only necessary if you are 
-# using nested deployment templates or DSC. 
-$DeployStorageAccount = 'peterlildeploywe'
-
-# Name of the Azure Key Vault that will be created
-$keyVaultName = 'mynewkv'
-
 # Azure AD Application Name, this must be unique within your tenant
 $aadAppDisplayName = "app-for-vm-encryption-$ResourceGroupName"
 
-# Azure AD Application Client secret. KEEP THIS OUT OF SOURCE CONTROL
-$aadClientSecret = '<YourJediMindTricksDoNotWorkOnMe>'
-
-# Name of the key used to encrypt the VMs
-#$vmEncryptionKeyName = 'vm-encryption-key'
-
 # Name of the key encryption key
 $keyEncryptionKeyName = 'vm-kek'
-
-# Name of the VM that will be created
-$vmName = 'gpuvmpeterlil2'
 
 # Declaration of runtime variables, they are populated by the script
 $aadClientId = ''
 $aadServicePrincipalId = ''
 $currentUserObjectId = ''
-
 
 ################################################################################
 ### Get hold of the JSON parameters for the network

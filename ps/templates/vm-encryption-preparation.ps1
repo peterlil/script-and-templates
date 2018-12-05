@@ -27,10 +27,11 @@ param(
 $azureAdApplication = Get-AzureRmADApplication -DisplayNameStartWith $appDisplayName
 if( !$azureAdApplication )
 {
+	$secureStringPwd = ConvertTo-SecureString $aadClientSecret -AsPlainText -Force
 	Write-Host 'Creating a new AAD Application.'
 	$azureAdApplication = New-AzureRmADApplication -DisplayName $appDisplayName `
 		-HomePage "https://www.microsoft.com/$appDisplayName" `
-		-IdentifierUris "https://www.microsoft.com/$appDisplayName" -Password $aadClientSecret
+		-IdentifierUris "https://www.microsoft.com/$appDisplayName" -Password $secureStringPwd
 }
 $aadClientID.Value = $azureAdApplication.ApplicationId
 Write-Host "AAD Application: $($azureAdApplication.ApplicationId)"

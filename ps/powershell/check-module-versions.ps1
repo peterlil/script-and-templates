@@ -5,7 +5,7 @@
 #$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources", "xDSCResourceDesigner") #PSDscResources
 #$moduleNames = @("xDSCResourceDesigner")
 $moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "AzureRM.OperationalInsights", "AzureRM.Insights", "Azure", "MSOnline", "AzureAD")
-$moduleNames = @("AzureRM.Billing")
+#$moduleNames = @("AzureRM.Billing")
 #$moduleNames = @("AzureRM.Storage")
 #$moduleNames = @("AzureRM.Compute")
 #$moduleNames = @("AzureRM.Resources")
@@ -25,7 +25,7 @@ ForEach ($moduleName in $moduleNames)
 {
     $currentModule = (Get-Module -Name $moduleName -ListAvailable)
     $newestModule = (Find-Module -Name $moduleName)
-
+    
     $moduleVersionListItem = new-Object -typename System.Object
     $moduleVersionListItem | Add-Member -MemberType noteProperty -Name "Name" -Value $moduleName
     $moduleVersionListItem | Add-Member -MemberType noteProperty -Name "Installed" -Value $currentModule.Version
