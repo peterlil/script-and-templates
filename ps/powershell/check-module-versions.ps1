@@ -1,21 +1,49 @@
-﻿# List modules and their versions
+﻿# HOWTO
+#
+# First you need to uninstall Azure PowerShell modules that has been installed by other means than through PowerShell (i.e. msi packages and installation program):
+# 1. Open "Add or remove programs" in Windows 10.
+# 2. Search for "Azure". 
+# 3. If you found "Azure PowerShell" in the list, uninstall it.
+#
+# Secondly, install the modules you want by using this script:
+# 1. Open PowerShell ISE in an elevated mode.
+# 2. Open this file in the PowerShell ISE editor.
+# 3. Uncomment or write the right line below so you populate the moduleNames array with the names of the modules you want to install.
+# 4. Run the complete script. NOTE: THIS WILL NOT MAKE ANY CHANGES TO YOUR SYSTEM, it will only:
+#    - Look for installed versions of the modules you are interested in.
+#    - Look for the latest available version of the modules and compare.
+#    - Output the status of installed modules
+#    - Output Install-commands for all modules
+#    - Output Update-commands for all modules. 
+# 5. Review what modules you are completely missing, copy the install-command for those to a new file.
+# 6. Review what modules you need to update, copy the update-command for those to the new file.
+# 7. Run the commands in the new file. 
+# 8. Done.
 
 
-# DSC
-#$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources", "xDSCResourceDesigner") #PSDscResources
-#$moduleNames = @("xDSCResourceDesigner")
-$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "AzureRM.OperationalInsights", "AzureRM.Insights", "Azure", "MSOnline", "AzureAD")
+
+# List modules and their versions.
+
+# Common IaaS, AAD and automation modules
+#$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "AzureRM.OperationalInsights", "AzureRM.Insights", "Azure", "MSOnline", "AzureAD")
+
+# Misc individual modules
 #$moduleNames = @("AzureRM.Billing")
 #$moduleNames = @("AzureRM.Storage")
 #$moduleNames = @("AzureRM.Compute")
 #$moduleNames = @("AzureRM.Resources")
 #$moduleNames = @("AzureRM.Network")
 #$moduleNames = @("AzureRM.KeyVault")
+#$moduleNames = @("AzureRM.Sql")
 #$moduleNames = @("AzureRM.OperationalInsights")
 #$moduleNames = @("Azure")
 #$moduleNames = @("MSOnline")
 #$moduleNames = @("Microsoft.PowerShell.Utility")
 #$moduleNames = @("AzureAD")
+
+# Modules for Desired State Configuration
+#$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources", "xDSCResourceDesigner") #PSDscResources
+#$moduleNames = @("xDSCResourceDesigner")
 
 # Most common Azure
 #$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "Azure", "MSOnline")
