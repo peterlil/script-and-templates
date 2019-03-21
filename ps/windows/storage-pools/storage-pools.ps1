@@ -1,4 +1,7 @@
-﻿# Execute locally on VM
+﻿
+Get-PhysicalDisk | Sort-Object DeviceId | ft DeviceId, Size
+
+# Execute locally on VM
 #Creating Storage Pool and assigning disks to this pool
 $DiskDeviceIdStart = 2   #Physical disks' device ID that is the starting disk to add to the pool
 $DiskDeviceCount   = 14  #Physical disks' device ID that is the ending disk to add to the pool
@@ -33,7 +36,7 @@ Remove-Partition -DriveLetter $DriveLetter
 Remove-VirtualDisk -FriendlyName $SPFn
 #
 #
-#Get-StoragePool -FriendlyName datafiles | Get-ResiliencySetting
-#Get-StoragePool -FriendlyName datafiles | fl *
+Get-StoragePool -FriendlyName datafiles | Get-ResiliencySetting
+Get-StoragePool -FriendlyName datafiles | fl *
 
 
