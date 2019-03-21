@@ -1,5 +1,5 @@
 ﻿
-Get-PhysicalDisk | Sort-Object DeviceId | ft DeviceId, Size
+Get-PhysicalDisk | Sort-Object DeviceId | Format-Table DeviceId, Size
 
 # Execute locally on VM
 #Creating Storage Pool and assigning disks to this pool
@@ -7,7 +7,7 @@ $DiskDeviceIdStart = 2   #Physical disks' device ID that is the starting disk to
 $DiskDeviceCount   = 14  #Physical disks' device ID that is the ending disk to add to the pool
 $SPFn = "datafiles"      #Storage Pool Friendly Name
 $DriveLetter = 'M'
-$DiskSize = 1099511627776 # Use 'Get-PhysicalDisk | ft Size' to get the size.
+$DiskSize = 1099511627776 # Use 'Get-PhysicalDisk | Format-Table Size' to get the size.
 
 $Storage = Get-StorageSubSystem
 #Get-PhysicalDisk | Format-Table FriendlyName,DeviceId, Size
@@ -37,6 +37,6 @@ Remove-VirtualDisk -FriendlyName $SPFn
 #
 #
 Get-StoragePool -FriendlyName datafiles | Get-ResiliencySetting
-Get-StoragePool -FriendlyName datafiles | fl *
+Get-StoragePool -FriendlyName datafiles | Format-List *
 
 
