@@ -20,22 +20,23 @@ Get-AzureRmSubscription -SubscriptionId $subscriptionId | Select-AzureRmSubscrip
  #ConvertTo-AzureRmVMManagedDisk -ResourceGroupName $rgName -VMName $vmName
 
 
-$rgName = 'Test'
-$vmName = 'ds15v2-1'
+$rgName = 'vm-infra-2'
+$vmName = 'plweaz1ws2'
 $location = 'West Europe' 
-$storageType = 'PremiumLRS'
+$storageType = 'Premium_LRS'
+$zone = '1'
 
 $vm = Get-AzureRmVM -Name $vmName -ResourceGroupName $rgName 
 
 
-for ($i = 1; $i -lt 11; $i++) {
+for ($i = 1; $i -lt 13; $i++) {
     $dataDiskName = $vmName + "_datadisk$i"
 
-    $diskConfig = New-AzureRmDiskConfig -AccountType $storageType -Location $location -CreateOption Empty -DiskSizeGB 1023
+    $diskConfig = New-AzureRmDiskConfig -AccountType $storageType -Location $location -CreateOption Empty -DiskSizeGB 1024 -Zone $zone
 
     $dataDisk = New-AzureRmDisk -DiskName $dataDiskName -Disk $diskConfig -ResourceGroupName $rgName
     
-    $vm = Add-AzureRmVMDataDisk -VM $vm -Name $dataDiskName -CreateOption Attach -ManagedDiskId $dataDisk.Id -Lun $i
+    $vm = Add-AzureRmVMDataDisk -VM $vm -Name $dataDiskName -CreateOption Attach -ManagedDiskId $dataDisk.Id -Lun $i -Caching None
 
 }
 
