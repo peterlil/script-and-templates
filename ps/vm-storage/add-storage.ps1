@@ -13,13 +13,7 @@ $subscriptionId =
 
 Get-AzureRmSubscription -SubscriptionId $subscriptionId | Select-AzureRmSubscription
 
- #$rgName = "test"
- #$vmName = "ds15v2-1"
- #Stop-AzureRmVM -ResourceGroupName $rgName -Name $vmName -Force
-#
- #ConvertTo-AzureRmVMManagedDisk -ResourceGroupName $rgName -VMName $vmName
-
-
+# Option 1: Create and attach storage
 $rgName = 'vm-infra-2'
 $vmName = 'plweaz1ws2'
 $location = 'West Europe' 
@@ -41,3 +35,24 @@ for ($i = 1; $i -lt 13; $i++) {
 }
 
 Update-AzureRmVM -VM $vm -ResourceGroupName $rgName
+
+# Option 2: Only attach storage (storage already existing)
+$rgName = 'vm-infra-2'
+$vmName = 'plweaz1ws2'
+$location = 'West Europe' 
+$storageType = 'Premium_LRS'
+
+$vm = Get-AzureRmVM -Name $vmName -ResourceGroupName $rgName 
+
+
+for ($i = 1; $i -lt 13; $i++) {
+    $dataDiskName = $vmName + "_datadisk$i"
+
+    $dataDisk = Get-AzureRmDisk -ResourceGroupName $rgName -DiskName $dataDiskName
+    
+    $vm = Add-AzureRmVMDataDisk -VM $vm -Name $dataDiskName -CreateOption Attach -ManagedDiskId $dataDisk.Id -Lun $i -Caching None
+
+}
+
+Update-AzureRmVM -VM $vm -ResourceGroupName $rgName
+
