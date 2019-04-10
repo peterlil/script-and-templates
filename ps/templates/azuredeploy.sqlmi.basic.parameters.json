@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "managedInstanceName": {
+            "value": "plsqlmi"
+        },
+        "location": {
+            "value": "westeurope"
+        },
+        "administratorLogin": {
+            "value": "pladmin"
+        },
+        "administratorLoginPassword": {
+            "value": null
+        },
+        "virtualNetworkResourceGroupName": {
+            "value": "vm-infra"
+        },
+        "virtualNetworkName": {
+            "value": "vnet-we"
+        },
+        "subnetName": {
+            "value": "sqlmi1"
+        },
+        "skuName": {
+            "value": "GP_Gen5"
+        },
+        "skuEdition": {
+            "value": "GeneralPurpose"
+        },
+        "storageSizeInGB": {
+            "value": 256
+        },
+        "vCores": {
+            "value": 8
+        },
+        "licenseType": {
+            "value": "LicenseIncluded"
+        },
+        "hardwareFamily": {
+            "value": "Gen5"
+        },
+        "dnsZonePartner": {
+            "value": ""
+        },
+        "timezoneId": {
+            "value": "W. Europe Standard Time"
+        },
+        "collation": {
+            "value": "SQL_Latin1_General_CP1_CI_AS"
+        },
+        "proxyOverride": {
+            "value": "Redirect"
+        }
+    }
+}
