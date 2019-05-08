@@ -4,10 +4,16 @@
   "parameters": {
     "vmName": { "value": "#vmname#" },
     "publicDnsPrefix": { "value": "peterlil-#vmname#" },
-    "vmSize": {"value": "Standard_DS2_v2"},
+    "vmSize": {"value": "#vmSize#"},
     "storageType": {"value": "Premium_LRS"},
     "vnetName": { "value": "#vnetname#" },
     "subnetName": { "value": "#subnetname#" },
+    "enableAcceleratedNetworking": {
+        "value": #enableAcceleratedNetworking#
+    },
+    "networkSecurityGroupRules": {
+        "value": []
+    },
     "adminUserName": { "value": "#adminusername#" },
     "keyVaultName": { "value": "#keyvaultname#" },
     "keyVaultResourceGroup": { "value": "#keyvaultresourcegroup#" },
@@ -16,6 +22,24 @@
     },
     "aadClientSecret": {
       "value": "#aadClientSecret#"
+    },
+    "autoShutdownStatus": {
+        "value": "Enabled"
+    },
+    "autoShutdownTime": {
+        "value": "17:00"
+    },
+    "autoShutdownTimeZone": {
+        "value": "W. Europe Standard Time"
+    },
+    "autoShutdownNotificationStatus": {
+        "value": "Enabled"
+    },
+    "autoShutdownNotificationLocale": {
+        "value": "en"
+    },
+    "autoShutdownNotificationEmail": {
+        "value": "#autoShutdownNotificationEmail#"
     }
   }
 }

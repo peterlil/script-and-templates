@@ -3,8 +3,6 @@ param(
     $ResourceGroupName,
     # Name of the Azure Key Vault that will be created
     $keyVaultName,
-    # Name of the VM that will be created
-    $vmName,
     # Azure AD Application Client secret. KEEP THIS OUT OF SOURCE CONTROL
     $aadClientSecret,
     # Location of the resources that are to be provisioned
@@ -30,7 +28,6 @@ if(!$check) {
 ### Login to Azure. 
 ################################################################################
 .\azure-ad\login-azurerm.ps1
-
 
 ################################################################################
 ### Set the variables for the script
@@ -61,27 +58,9 @@ $solutionSubnetName = $SolutionNetworkParams.parameters.solutionNwSubnet3Name.va
 ################################################################################
 ### Get the ObjectId of current user
 ################################################################################
-$Sessions = Get-PSSession | Where-Object { $_.ConfigurationName -eq 'Microsoft.Exchange'}
-$cred = Get-Credential -Message 'Enter the credentials for AAD'
-if( $Sessions ){
-    if ($Sessions -is [system.array] ) {
-        $Session = $Sessions[0]
-    } else {
-        $Session = $Sessions
-    }
-} else {
-    $Session = New-PSSession -ConfigurationName Microsoft.Exchange `
-        -ConnectionUri https://outlook.office365.com/powershell-liveid/ `
-        -Credential $cred -Authentication Basic -AllowRedirection
-}
-
-if ( !(Get-Command Connect-MsolService) ) {
-    Import-PSSession $Session;
-    Import-Module MSOnline;
-}
-Connect-MsolService -credential $cred
-$currentUserObjectId = (Get-MsolUser -UserPrincipalName $cred.UserName).ObjectId
-
+$strFilter = ("userPrincipalName eq '" + (Get-AzureRmContext).Account.Id + "'");
+Connect-AzureAD
+$currentUserObjectId = (Get-AzureADUser -Filter $strFilter).ObjectId
 
 ################################################################################
 ### Create a virtual network for the solution
@@ -111,27 +90,50 @@ $tempParameterFile = [System.IO.Path]::GetTempFileName()
     -keyVaultResourceGroupName $ResourceGroupName -keyEncryptionKeyName $keyEncryptionKeyName `
     -appDisplayName $aadAppDisplayName -aadClientId ([ref]$aadClientId) -aadServicePrincipalId ([ref]$aadServicePrincipalId)
 
+$answer = $false;
+do {
+    $quitLoop = $false;
+    $answer = (Read-Host 'Would you like to deplay a stand-alone Windows Server 2019? (y/n)').ToLower();
+
+    $quitLoop = switch ($answer) {
+        'y' { $true; }
+        'n' { $true; }
+        default { $false }
+    }
+} while ($quitLoop -eq $false);
+
+if ( $answer -eq 'y' ) {
+    ################################################################################
+    ### OPTION: Deploy a standalone Windows VM
+    ################################################################################
+    Write-Host 'Deploying a standalone Windows VM'
+    $vmName = Read-Host 'VM name'
+    $vmSize = Read-Host 'VM size (Standard_D2s_v3 by default)'
+    if ( !$vmSize ) { $vmSize = 'Standard_D2s_v3' }
+    $userName = Read-Host 'Type admin user name'
+    $autoShutdownNotificationEmail = Read-Host 'Email address for auto-shutdown notifications'
+    $enableAcceleratedNetworking = Read-Host 'Enable Accelerated Networking (true/false)'
+
+    $tempParameterFile = [System.IO.Path]::GetTempFileName()
+    ((Get-Content -Path .\templates\azuredeploy.standalone-vm.parameters.json) `
+        -replace "#vmname#", $vmName `
+        -replace "#vmSize#", $vmSize `
+        -replace "#vnetname#", $solutionNwName `
+        -replace "#subnetname#", $solutionSubnetName `
+        -replace "#adminusername#", $userName `
+        -replace "#keyvaultname#", $keyVaultName `
+        -replace "#keyvaultresourcegroup#", $ResourceGroupName `
+        -replace "#aadClientID#", $aadClientId `
+        -replace "#aadClientSecret#", $aadClientSecret `
+        -replace "#autoShutdownNotificationEmail#", $autoShutdownNotificationEmail `
+        -replace "#enableAcceleratedNetworking#", $enableAcceleratedNetworking ) | `
+        Out-File $tempParameterFile
+    .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
+        -TemplateFile .\templates\azuredeploy.standalone-vm.json -TemplateParametersFile $tempParameterFile 
+}
+
 # Stop execution
 exit
-
-
-################################################################################
-### OPTION: Deploy a standalone Windows VM
-################################################################################
-$userName = Read-Host 'Type admin user name:'
-$tempParameterFile = [System.IO.Path]::GetTempFileName()
-((Get-Content -Path .\templates\azuredeploy.standalone-vm.parameters.json) `
-    -replace "#vmname#", $vmName `
-    -replace "#vnetname#", $solutionNwName `
-    -replace "#subnetname#", $solutionSubnetName `
-    -replace "#adminusername#", $userName `
-    -replace "#keyvaultname#", $keyVaultName `
-    -replace "#keyvaultresourcegroup#", $ResourceGroupName `
-    -replace "#aadClientID#", $aadClientId `
-    -replace "#aadClientSecret#", $aadClientSecret ) | `
-    Out-File $tempParameterFile
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation $Location -ResourceGroupName $ResourceGroupName `
-    -TemplateFile .\templates\azuredeploy.standalone-vm.json -TemplateParametersFile $tempParameterFile 
 
 
 ################################################################################
