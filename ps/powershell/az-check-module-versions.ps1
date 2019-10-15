@@ -24,29 +24,28 @@
 
 # List modules and their versions.
 
-# Common IaaS, AAD and automation modules
-#$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "AzureRM.OperationalInsights", "AzureRM.Insights", "Azure", "MSOnline", "AzureAD")
+# Totti
+$moduleNames = @("Az") 
 
-# Misc individual modules
-#$moduleNames = @("AzureRM.Billing")
-#$moduleNames = @("AzureRM.Storage")
-#$moduleNames = @("AzureRM.Compute")
-$moduleNames = @("AzureRM.Resources")
-#$moduleNames = @("AzureRM.Network")
-#$moduleNames = @("AzureRM.KeyVault")
-#$moduleNames = @("AzureRM.Sql")
-#$moduleNames = @("AzureRM.OperationalInsights")
-#$moduleNames = @("Azure")
+#More granular
+$moduleNames = @("Az.Compute", "Az.Accounts", "Az.Storage", "Az.Resources", "Az.Compute", "Az.Sql", "Az.Network", "Az.KeyVault", "Az.Peering", "MSOnline", "AzureAD")
+
+
+# Find all Az-modules
+#Find-Module -Name Az.*
+
+# Uninstall all AzureRm-modules
+#Get-Module -Name AzureRm.* -ListAvailable | Uninstall-Module -Force
+
 #$moduleNames = @("MSOnline")
 #$moduleNames = @("Microsoft.PowerShell.Utility")
 #$moduleNames = @("AzureAD")
+#$moduleNames = @("Az")
 
 # Modules for Desired State Configuration
 #$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources", "xDSCResourceDesigner") #PSDscResources
 #$moduleNames = @("xDSCResourceDesigner")
 
-# Most common Azure
-#$moduleNames = @("AzureRM.Automation", "AzureRM.Compute", "AzureRM.Network", "AzureRM.Profile", "AzureRM.Resources", "AzureRM.Storage", "AzureRM.KeyVault", "Azure", "MSOnline")
 
 $moduleVersionList = @()
 ForEach ($moduleName in $moduleNames)
@@ -68,18 +67,11 @@ ForEach ($moduleName in $moduleNames)
         $moduleVersionListItem | Add-Member -MemberType noteProperty -Name "NeedsUpgrade" -Value $true
     }
 
-    if ( $moduleName -eq "Azure" ) {
-        $moduleVersionListItem | Add-Member -MemberType noteProperty -Name "InstallCmd" `
-            -Value "Install-Module $moduleName -RequiredVersion $($newestModule.Version) -Force -AllowClobber"
-        $moduleVersionListItem | Add-Member -MemberType noteProperty -Name "UpdateCmd" `
-            -Value "Update-Module $moduleName -RequiredVersion $($newestModule.Version) -Force"
-    }
-    else {
-        $moduleVersionListItem | Add-Member -MemberType noteProperty -Name "InstallCmd" `
-            -Value "Install-Module $moduleName -RequiredVersion $($newestModule.Version) -Force"
-        $moduleVersionListItem | Add-Member -MemberType noteProperty -Name "UpdateCmd" `
-            -Value "Update-Module $moduleName -RequiredVersion $($newestModule.Version) -Force"
-    }    
+    $moduleVersionListItem | Add-Member -MemberType noteProperty -Name "InstallCmd" `
+        -Value "Install-Module $moduleName -RequiredVersion $($newestModule.Version) -Force"
+    $moduleVersionListItem | Add-Member -MemberType noteProperty -Name "UpdateCmd" `
+        -Value "Update-Module $moduleName -RequiredVersion $($newestModule.Version) -Force"
+
     $moduleVersionList += $moduleVersionListItem
 }
 
