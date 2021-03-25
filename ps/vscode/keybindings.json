@@ -1,0 +1,6 @@
+// My custom key bindings
+[
+    // toggle between editor and terminal
+    { "key": "alt+oem_4", "command": "workbench.action.terminal.focus"},
+    { "key": "alt+oem_4", "command": "workbench.action.focusActiveEditorGroup", "when": "terminalFocus"}
+]
