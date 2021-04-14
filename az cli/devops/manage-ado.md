@@ -28,6 +28,6 @@ Query for work items using id.
 ### Update examples
 
 Update a work item's iteration.
-`az boards work-item update --id 7062 --iteration 'Vattenfall Account Team Scrum\FY20'`
+`az boards work-item update --id 7062 --iteration '<project>\FY20'`
 
-Default iteration: Vattenfall Account Team Scrum
+
