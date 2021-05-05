@@ -31,7 +31,7 @@
 #$moduleNames = @("AzureRM.Billing")
 #$moduleNames = @("AzureRM.Storage")
 #$moduleNames = @("AzureRM.Compute")
-$moduleNames = @("AzureRM.Resources")
+#$moduleNames = @("AzureRM.Resources")
 #$moduleNames = @("AzureRM.Network")
 #$moduleNames = @("AzureRM.KeyVault")
 #$moduleNames = @("AzureRM.Sql")
@@ -39,7 +39,7 @@ $moduleNames = @("AzureRM.Resources")
 #$moduleNames = @("Azure")
 #$moduleNames = @("MSOnline")
 #$moduleNames = @("Microsoft.PowerShell.Utility")
-#$moduleNames = @("AzureAD")
+$moduleNames = @("AzureAD")
 
 # Modules for Desired State Configuration
 #$moduleNames = @("xPSDesiredStateConfiguration", "xActiveDirectory", "xNetworking", "xPendingReboot", "xStorage", "PSDscResources", "xDSCResourceDesigner") #PSDscResources

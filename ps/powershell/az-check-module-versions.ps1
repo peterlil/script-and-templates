@@ -25,14 +25,14 @@
 # List modules and their versions.
 
 # Totti
-$moduleNames = @("Az") 
+#$moduleNames = @("Az") 
 
 #More granular
-$moduleNames = @("Az.Compute", "Az.Accounts", "Az.Storage", "Az.Resources", "Az.Compute", "Az.Sql", "Az.Network", "Az.KeyVault", "Az.Peering", "MSOnline", "AzureAD")
+#$moduleNames = @("Az.Compute", "Az.Accounts", "Az.Storage", "Az.Resources", "Az.Compute", "Az.Sql", "Az.Network", "Az.KeyVault", "Az.Peering", "MSOnline", "AzureAD")
 
 
 # Find all Az-modules
-#Find-Module -Name Az.*
+Find-Module -Name Az.*
 
 # Uninstall all AzureRm-modules
 #Get-Module -Name AzureRm.* -ListAvailable | Uninstall-Module -Force

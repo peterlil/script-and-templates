@@ -16,7 +16,10 @@ To get help and to navigate the CLI extension, run this command `az devops -h`.
 ## Working with Boards
 
 `az boards -h`
+`az boards work-item -h`
 `az boards work-item show -h`
+
+`az boards work-item show --id <id>`
 
 ### Query examples
 

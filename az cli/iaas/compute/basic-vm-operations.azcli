@@ -1,3 +1,10 @@
+# List the names of all VMs in a subscription
+az vm list --query "[].name | {Names: join(', ', @)}"
+az vm list --query "[[*].[name,resourceGroup]]"
+
+# List details of a VM
+az vm show -n <name> -g <rg>
+
 # List the names of the VMs in a resource group
 az vm list -g Test --query "[].name | {Names: join(', ', @)}"
 
@@ -13,3 +20,36 @@ az vm delete --name peterlil57 --resource-group Test --yes
 # attach a disk to a vm
 az vm disk attach --disk peterlil57_OsDisk_1_4b40e0412cb84d35b42e4fa77008598f --resource-group Test --vm-name peterlil56
 
+# start a vm
+az vm start -n <vmname> -g <rg>
+
+# List the NICs on the VM
+az vm nic list -g <rg> --vm-name <vm>
+
+# Show details of a NIC on a VM
+az vm nic show --nic <nic> -g <rg> --vm-name <vm>
+
+# List ip addresses on a VM
+az vm list-ip-addresses -g <rg> --name <vm>
+
+# List the public ip address for a VM.
+az vm list-ip-addresses -g <rg> --name <vm> --query "[*].virtualMachine.network.publicIpAddresses"
+
+# Get the DNS name for a VM that has only one public ip
+$rgName = "<rg>"
+$vmName = "<vm>"
+$ipName = (az vm list-ip-addresses -g $rgName --name $vmName --query "[0].virtualMachine.network.publicIpAddresses[0].name") -replace "`"", ""
+$vmId = (az vm list-ip-addresses -g $rgName --name $vmName --query "[0].virtualMachine.network.publicIpAddresses[0].name") -replace "`"", ""
+$fqdn = (az network public-ip show -g $rgName -n $ipName --query "dnsSettings.fqdn") -replace "`"", ""
+$fqdn
+
+# Request just-in-time access
+$JitPolicyVm1 = (@{
+    id=;
+    ports=(@{
+       number=22;
+       endTimeUtc="2020-07-15T17:00:00.3658798Z";
+       allowedSourceAddressPrefix=@("IPV4ADDRESS")})})
+
+# start rd session
+mstsc.exe /v: $fqdn
