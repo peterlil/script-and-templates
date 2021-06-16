@@ -1,0 +1,151 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sql_server_name": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "db_name_prefix": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "location": {
+            "defaultValue": "swedencentral",
+            "type": "string"
+        },
+        "server_admin_password":{
+            "type": "securestring"
+        },
+        "sync_db_name":{
+            "type": "string"
+        },
+        "sync_group_name":{
+            "type": "string"
+        }
+    },
+    "variables": {
+        
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2021-02-01-preview",
+            "name": "[parameters('sql_server_name')]",
+            "location": "[parameters('location')]",
+            "kind": "v12.0",
+            "properties": {
+                "administratorLogin": "pladmin",
+                "administratorLoginPassword": "[parameters('server_admin_password')]",
+                "version": "12.0",
+                "publicNetworkAccess": "Enabled",
+                "restrictOutboundNetworkAccess": "Disabled"
+            }
+        },
+        {
+            "type": "Microsoft.Sql/servers/auditingPolicies",
+            "apiVersion": "2014-04-01",
+            "name": "[concat(parameters('sql_server_name'), '/Default')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sql_server_name'))]"
+            ],
+            "properties": {
+                "auditingState": "Disabled"
+            }
+        },
+        {
+            "type": "Microsoft.Sql/servers/databases",
+            "apiVersion": "2021-02-01-preview",
+            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name_prefix'), copyIndex(1))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sql_server_name'))]"
+            ],
+            "sku": {
+                "name": "GP_S_Gen5",
+                "tier": "GeneralPurpose",
+                "family": "Gen5",
+                "capacity": 2
+            },
+            "kind": "v12.0,user,vcore,serverless",
+            "properties": {
+                "collation": "SQL_Latin1_General_CP1_CI_AS",
+                "maxSizeBytes": 34359738368,
+                "catalogCollation": "SQL_Latin1_General_CP1_CI_AS",
+                "zoneRedundant": false,
+                "readScale": "Disabled",
+                "autoPauseDelay": 60,
+                "requestedBackupStorageRedundancy": "Geo",
+                "minCapacity": 0.5,
+                "maintenanceConfigurationId": "[concat(subscription().id, '/providers/Microsoft.Maintenance/publicMaintenanceConfigurations/SQL_Default')]",
+                "isLedgerOn": false
+            },
+            "copy": {
+                "name": "sqldbcopy",
+                "count": 2
+            }
+        },
+        {
+            "type": "Microsoft.Sql/servers/databases",
+            "apiVersion": "2021-02-01-preview",
+            "name": "[concat(parameters('sql_server_name'), '/', parameters('sync_db_name'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('sql_server_name'))]"
+            ],
+            "sku": {
+                "tier": "Standard",
+                "name": "S0"
+            },
+            "properties": {
+                "collation": "SQL_Latin1_General_CP1_CI_AS",
+                "maxSizeBytes": 1073741824,
+                "catalogCollation": "SQL_Latin1_General_CP1_CI_AS",
+                "zoneRedundant": false,
+                "readScale": "Disabled",
+                "autoPauseDelay": 60,
+                "requestedBackupStorageRedundancy": "Geo",
+                "minCapacity": 0.5,
+                "maintenanceConfigurationId": "[concat(subscription().id, '/providers/Microsoft.Maintenance/publicMaintenanceConfigurations/SQL_Default')]",
+                "isLedgerOn": false
+            }
+        },
+        {
+            "name": "[concat(parameters('sql_server_name'), '/', parameters('sync_db_name'), '/', parameters('sync_group_name'))]",
+            "type": "Microsoft.Sql/servers/databases/syncGroups",
+            "apiVersion": "2020-11-01-preview",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('sync_db_name'))]"
+            ],"properties": {
+                "interval": "300",
+                "conflictResolutionPolicy": "HubWin",
+                "syncDatabaseId": "[resourceId(resourceGroup().name, 'Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('sync_db_name'))]",
+                "hubDatabaseUserName": "pladmin",
+                "hubDatabasePassword": "[parameters('server_admin_password')]"
+            }
+        },
+        {
+            "name": "[concat(parameters('sql_server_name'), '/', parameters('sync_db_name'), '/', parameters('sync_group_name'), '/', parameters('db_name_prefix'), copyIndex(1))]",
+            "type": "Microsoft.Sql/servers/databases/syncGroups/syncMembers",
+            "apiVersion": "2020-11-01-preview",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('sync_db_name'))]",
+                "[resourceId(resourceGroup().name, 'Microsoft.Sql/servers/databases', parameters('sql_server_name'), concat(parameters('db_name_prefix'), copyIndex(1)))]"
+            ],
+            "properties": {
+                "databaseType": "AzureSqlDatabase",
+                "syncMemberAzureDatabaseResourceId": "[resourceId(resourceGroup().name, 'Microsoft.Sql/servers/databases', parameters('sql_server_name'), concat(parameters('db_name_prefix'), copyIndex(1)))]",
+                "serverName": "[concat(parameters('sql_server_name'), '.database.windows.net')]",
+                "databaseName": "[concat(parameters('db_name_prefix'), copyIndex(1))]",
+                "userName": "pladmin",
+                "password": "[parameters('server_admin_password')]",
+                "syncDirection": "Bidirectional"
+            },
+            "copy": {
+                "name": "sqldbcopy",
+                "count": 2
+            }
+        }
+    ]
+}
