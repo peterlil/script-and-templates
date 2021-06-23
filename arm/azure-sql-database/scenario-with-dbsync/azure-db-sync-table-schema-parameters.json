@@ -3,13 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "sql_server_name": {
-            "value": "test-swec"
+            "value": "dbsync-server"
         },
-        "db_name": {
-            "value": "swedb1"
+        "sync_db_name":{
+            "value": "sql-sync-db"
         },
-        "location": {
-            "value": "swedencentral"
+        "sync_group_name":{
+            "value": "sql-sync-group"
         }
     }
 }

@@ -1,0 +1,54 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sql_server_name": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "sync_db_name": {
+            "type": "string"
+        },
+        "sync_group_name": {
+            "type": "string"
+        }
+
+    },
+    "variables": {
+
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('sql_server_name'), '/', parameters('sync_db_name'), '/', parameters('sync_group_name'))]",
+            "type": "Microsoft.Sql/servers/databases/syncGroups",
+            "apiVersion": "2020-11-01-preview",
+            "properties": {
+                "schema": {
+                    "tables": [
+                        {
+                            "columns": [
+                                {
+                                    "quotedName": "id",
+                                    "dataSize": "4",
+                                    "dataType": "int"
+                                },
+                                {
+                                    "quotedName": "created",
+                                    "dataSize": "8",
+                                    "dataType": "datetime"
+                                },
+                                {
+                                    "quotedName": "some_text",
+                                    "dataSize": "100",
+                                    "dataType": "nvarchar"
+                                }
+                            ],
+                            "quotedName": "t1"
+                        }
+                    ],
+                    "masterSyncMemberName": "db1"
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,3 @@
+﻿
+# List the names and lun numbers of each data disk on a VM
+az vm show -n <vm-name> -g <rg-name> --query "storageProfile.dataDisks[].{Name:name, LUN:lun}"

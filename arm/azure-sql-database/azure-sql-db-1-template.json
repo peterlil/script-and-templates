@@ -27,26 +27,26 @@
             "location": "[parameters('location')]",
             "kind": "v12.0",
             "properties": {
-                "administratorLogin": "pladmin",
+                "administratorLogin": "pl-admin",
                 "administratorLoginPassword": "[parameters('server_admin_password')]",
                 "version": "12.0",
                 "publicNetworkAccess": "Enabled",
                 "restrictOutboundNetworkAccess": "Disabled"
             }
-        },
-        {
-            "type": "Microsoft.Sql/servers/auditingPolicies",
-            "apiVersion": "2014-04-01",
-            "name": "[concat(parameters('sql_server_name'), '/Default')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', parameters('sql_server_name'))]"
-            ],
-            "properties": {
-                "auditingState": "Disabled"
-            }
-        },
-        {
+        }
+        //,{
+        //    "type": "Microsoft.Sql/servers/auditingPolicies",
+        //    "apiVersion": "2014-04-01",
+        //    "name": "[concat(parameters('sql_server_name'), '/Default')]",
+        //    "location": "[parameters('location')]",
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Sql/servers', parameters('sql_server_name'))]"
+        //    ],
+        //    "properties": {
+        //        "auditingState": "Disabled"
+        //    }
+        //}
+        ,{
             "type": "Microsoft.Sql/servers/databases",
             "apiVersion": "2021-02-01-preview",
             "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'))]",
@@ -60,129 +60,142 @@
                 "family": "Gen5",
                 "capacity": 2
             },
-            "kind": "v12.0,user,vcore,serverless",
+            "kind": "v12.0,user,vcore",
             "properties": {
                 "collation": "SQL_Latin1_General_CP1_CI_AS",
                 "maxSizeBytes": 34359738368,
                 "catalogCollation": "SQL_Latin1_General_CP1_CI_AS",
                 "zoneRedundant": false,
                 "readScale": "Disabled",
-                "autoPauseDelay": 60,
+                "autoPauseDelay": -1,
                 "requestedBackupStorageRedundancy": "Geo",
                 "minCapacity": 0.5,
                 "maintenanceConfigurationId": "[concat(subscription().id, '/providers/Microsoft.Maintenance/publicMaintenanceConfigurations/SQL_Default')]",
                 "isLedgerOn": false
             }
-        },
-        {
-            "type": "Microsoft.Sql/servers/databases/auditingPolicies",
+        }
+        //,{
+        //    "type": "Microsoft.Sql/servers/databases/auditingPolicies",
+        //    "apiVersion": "2014-04-01",
+        //    "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
+        //    "location": "[parameters('location')]",
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
+        //    ],
+        //    "properties": {
+        //        "auditingState": "Disabled"
+        //    }
+        //}
+        //,{
+        //    "type": "Microsoft.Sql/servers/databases/auditingSettings",
+        //    "apiVersion": "2021-02-01-preview",
+        //    "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
+        //    ],
+        //    "properties": {
+        //        "retentionDays": 0,
+        //        "isAzureMonitorTargetEnabled": false,
+        //        "state": "Disabled",
+        //        "storageAccountSubscriptionId": "00000000-0000-0000-0000-000000000000"
+        //    }
+        //}
+        //,{
+        //    "type": "Microsoft.Sql/servers/databases/backupShortTermRetentionPolicies",
+        //    "apiVersion": "2021-02-01-preview",
+        //    "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/default')]",
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
+        //    ],
+        //    "properties": {
+        //        "retentionDays": 7
+        //    }
+        //}
+        //,{
+        //    "type": "Microsoft.Sql/servers/databases/extendedAuditingSettings",
+        //    "apiVersion": "2021-02-01-preview",
+        //    "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
+        //    ],
+        //    "properties": {
+        //        "retentionDays": 0,
+        //        "isAzureMonitorTargetEnabled": false,
+        //        "state": "Disabled",
+        //        "storageAccountSubscriptionId": "00000000-0000-0000-0000-000000000000"
+        //    }
+        //}
+        //,{
+        //    "type": "Microsoft.Sql/servers/databases/geoBackupPolicies",
+        //    "apiVersion": "2014-04-01",
+        //    "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
+        //    "location": "[parameters('location')]",
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
+        //    ],
+        //    "properties": {
+        //        "state": "Enabled"
+        //    }
+        //}
+        //,{
+        //    "type": "Microsoft.Sql/servers/databases/securityAlertPolicies",
+        //    "apiVersion": "2021-02-01-preview",
+        //    "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
+        //    ],
+        //    "properties": {
+        //        "state": "Disabled",
+        //        "disabledAlerts": [
+        //            ""
+        //        ],
+        //        "emailAddresses": [
+        //            ""
+        //        ],
+        //        "emailAccountAdmins": false,
+        //        "retentionDays": 0
+        //    }
+        //}
+        //,{
+        //    "type": "Microsoft.Sql/servers/databases/vulnerabilityAssessments",
+        //    "apiVersion": "2021-02-01-preview",
+        //    "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
+        //    ],
+        //    "properties": {
+        //        "recurringScans": {
+        //            "isEnabled": false,
+        //            "emailSubscriptionAdmins": true,
+        //            "emails": []
+        //        }
+        //    }
+        //}
+        //,{
+        //    "type": "Microsoft.Sql/servers/databases/backupLongTermRetentionPolicies",
+        //    "apiVersion": "2021-02-01-preview",
+        //    "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/default')]",
+        //    "dependsOn": [
+        //        "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
+        //    ],
+        //    "properties": {
+        //        "weeklyRetention": "P1W",
+        //        "monthlyRetention": "P1W",
+        //        "yearlyRetention": "P1W",
+        //        "weekOfYear": 1
+        //    }
+        //}
+        ,{
+            "type": "Microsoft.Sql/servers/databases/transparentDataEncryption",
             "apiVersion": "2014-04-01",
-            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
-            "location": "[parameters('location')]",
+            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/current')]",
+            "location": "Sweden Central",
             "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
+                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]",
+                "[resourceId('Microsoft.Sql/servers', parameters('sql_server_name'))]"
             ],
             "properties": {
-                "auditingState": "Disabled"
-            }
-        },
-        {
-            "type": "Microsoft.Sql/servers/databases/auditingSettings",
-            "apiVersion": "2021-02-01-preview",
-            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
-            ],
-            "properties": {
-                "retentionDays": 0,
-                "isAzureMonitorTargetEnabled": false,
-                "state": "Disabled",
-                "storageAccountSubscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-        },
-        {
-            "type": "Microsoft.Sql/servers/databases/backupShortTermRetentionPolicies",
-            "apiVersion": "2021-02-01-preview",
-            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
-            ],
-            "properties": {
-                "retentionDays": 7
-            }
-        },
-        {
-            "type": "Microsoft.Sql/servers/databases/extendedAuditingSettings",
-            "apiVersion": "2021-02-01-preview",
-            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
-            ],
-            "properties": {
-                "retentionDays": 0,
-                "isAzureMonitorTargetEnabled": false,
-                "state": "Disabled",
-                "storageAccountSubscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-        },
-        {
-            "type": "Microsoft.Sql/servers/databases/geoBackupPolicies",
-            "apiVersion": "2014-04-01",
-            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
-            ],
-            "properties": {
-                "state": "Enabled"
-            }
-        },
-        {
-            "type": "Microsoft.Sql/servers/databases/securityAlertPolicies",
-            "apiVersion": "2021-02-01-preview",
-            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
-            ],
-            "properties": {
-                "state": "Disabled",
-                "disabledAlerts": [
-                    ""
-                ],
-                "emailAddresses": [
-                    ""
-                ],
-                "emailAccountAdmins": false,
-                "retentionDays": 0
-            }
-        },
-        {
-            "type": "Microsoft.Sql/servers/databases/vulnerabilityAssessments",
-            "apiVersion": "2021-02-01-preview",
-            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/Default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
-            ],
-            "properties": {
-                "recurringScans": {
-                    "isEnabled": false,
-                    "emailSubscriptionAdmins": true,
-                    "emails": []
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Sql/servers/databases/backupLongTermRetentionPolicies",
-            "apiVersion": "2021-02-01-preview",
-            "name": "[concat(parameters('sql_server_name'), '/', parameters('db_name'), '/default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', parameters('sql_server_name'), parameters('db_name'))]"
-            ],
-            "properties": {
-                "weeklyRetention": "PT0S",
-                "monthlyRetention": "PT0S",
-                "yearlyRetention": "PT0S",
-                "weekOfYear": 1
+                "status": "Enabled"
             }
         }
     ]
