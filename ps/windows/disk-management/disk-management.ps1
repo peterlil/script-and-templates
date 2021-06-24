@@ -1,27 +1,13 @@
-
+# Load the disk, partition and logical disk information
 $diskDrives = Get-CimInstance -Class Win32_DiskDrive | Sort-Object -Property DeviceID
 $diskDriveToDiskPartitionMappings = Get-CimInstance -Class Win32_DiskDriveToDiskPartition
 $diskPartitions = Get-CimInstance -Class Win32_DiskPartition
 $logicalDiskToPartitionMappings = Get-CimInstance -Class Win32_LogicalDiskToPartition
 $logicalDisks = Get-CimInstance -Class Win32_LogicalDisk
-$volumes = Get-CimInstance -Class Win32_Volume
 
-#$diskDrives[0] | Format-List *
-#$diskDrives | Format-List DeviceID, *
-#$diskDrives | Format-Table DeviceID, Name, Index 
-
-#$diskDriveToDiskPartitionMappings | Format-List Antecedent, *
-#$diskDriveToDiskPartitionMappings | Format-Table Antecedent, *
-#$diskDriveToDiskPartitionMappings | Format-Table Dependent
-
-#$diskPartitions | Format-Table Name
-
-#$logicalDiskToPartitionMappings | Format-Table Antecedent, Dependent
-#$logicalDiskToPartitionMappings.Length
-
-# $logicalDisks | Format-List *
-
-# | Where-Object { $_.Index -eq 0 }
+# Not sure if Win32_Volume is depricated or not. It's the only place I found the name on the system reserved 
+# partitions, but right now it's not being used.
+#$volumes = Get-CimInstance -Class Win32_Volume
 
 $list = $diskDrives | ForEach-Object {
   $diskDrive = $_
@@ -31,8 +17,6 @@ $list = $diskDrives | ForEach-Object {
     $diskDriveToDiskPartitionMapping = $diskDriveToDiskPartitionMappings |
       Where-Object { $_.Antecedent.DeviceID -eq $diskDrive.DeviceID }
       
-    #$diskDriveToDiskPartitionMapping | Format-Table Antecedent, Dependent
-
     if($diskDriveToDiskPartitionMapping) {
       $diskDriveToDiskPartitionMapping | ForEach-Object {
         $partitionMapping = $_
@@ -42,9 +26,6 @@ $list = $diskDrives | ForEach-Object {
         $logicalDiskToPartitionMapping = $logicalDiskToPartitionMappings |
             Where-Object { $_.Antecedent.DeviceID -eq $partitionMapping.Dependent.DeviceID }
         
-        #$logicalDiskToPartitionMapping | Format-Table Antecedent, Dependent
-
-        #$logicalDiskToPartitionMapping.Dependent.DeviceID
         if($logicalDiskToPartitionMapping) {
           $logicalDisk = $logicalDisks |
             Where-Object {$_.DeviceID -eq $logicalDiskToPartitionMapping.Dependent.DeviceID}
@@ -70,7 +51,7 @@ $list = $diskDrives | ForEach-Object {
           PartitionIndex = $diskPartition.Index
           PartitionName = $diskPartition.Name
           PartitionSize = $diskPartition.Size
-          PartitionSizeGB = [math]::Round($diskPartition.Size / (1024*1024*1024))
+          PartitionSizeGB = [math]::Round($diskPartition.Size / (1024*1024*1024), 1)
           PartitionIsBoot = $diskPartition.BootPartition
         }
       }
@@ -86,7 +67,7 @@ $list = $diskDrives | ForEach-Object {
         DiskPartitions = $DiskDrive.Partitions
         DiskInterfaceType = $DiskDrive.InterfaceType
         DiskSize = $DiskDrive.Size
-        DiskSizeGB = [math]::Round($DiskDrive.Size / (1024*1024*1024))
+        DiskSizeGB = [math]::Round($DiskDrive.Size / (1024*1024*1024), 1)
         DiskStatus = $DiskDrive.Status
         PartitionIndex = $null
         PartitionName = $null
