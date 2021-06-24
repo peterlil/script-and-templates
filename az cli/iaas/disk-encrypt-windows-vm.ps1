@@ -39,4 +39,6 @@ else
         $keyVaultName --volume-type All
 }
 
+az vm encryption show -n $vmName -g $rgName
+
 Write-Information "Done encrypting."
