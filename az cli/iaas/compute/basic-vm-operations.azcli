@@ -1,6 +1,7 @@
 # List the names of all VMs in a subscription
 az vm list --query "[].name | {Names: join(', ', @)}"
-az vm list --query "[[*].[name,resourceGroup]]"
+az vm list --query "[*].[name,resourceGroup]"
+az vm list --query "[*].[name,resourceGroup]" -o table
 
 # List details of a VM
 az vm show -n <name> -g <rg>
