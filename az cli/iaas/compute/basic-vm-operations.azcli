@@ -40,51 +40,57 @@ az vm list-ip-addresses -g <rg> --name <vm>
 az vm list-ip-addresses -g <rg> --name <vm> --query "[*].virtualMachine.network.publicIpAddresses"
 
 ################################################################################
-# Get the DNS name for a VM that has only one public ip
-################################################################################
-$rgName = "<rg>"
-$vmName = "<vm>"
-$ipName = (az vm list-ip-addresses -g $rgName --name $vmName --query "[0].virtualMachine.network.publicIpAddresses[0].name") -replace "`"", ""
-$vmId = (az vm list-ip-addresses -g $rgName --name $vmName --query "[0].virtualMachine.network.publicIpAddresses[0].name") -replace "`"", ""
-$fqdn = (az network public-ip show -g $rgName -n $ipName --query "dnsSettings.fqdn") -replace "`"", ""
-$fqdn
-
-################################################################################
 # Request just-in-time access
 ################################################################################
-$rgName = ""
-$vmName = ""
-$location = ""
-$hours = "3"
+function Request-JitAccess {
+    param(
+        $ResourceGroupName,
+        $VirtualMachineName
+    )
 
-$ip = (curl -s https://ifconfig.me/ip)
-$vmInfo = (az vm show -g $rgName -n $vmName -o tsv --query "[id, location]")
-# Reg exp to find a GUID: (?<SubscriptionId>[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})
-$vmInfo[0] -match "(?<SubscriptionId>[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})"
-$requestName = New-Guid
+    $ip = (curl -s https://ifconfig.me/ip)
+    $vmInfo = (az vm show -g $ResourceGroupName -n $VirtualMachineName -o tsv --query "[id, location]")
+    # Reg exp to find a GUID: (?<SubscriptionId>[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})
+    $null = $vmInfo[0] -match "(?<SubscriptionId>[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})"
+    $requestName = New-Guid
 
-$EndPoint = "https://management.azure.com/subscriptions/$($matches.SubscriptionId)/resourceGroups/$rgName/providers/Microsoft.Security/locations/$location/jitNetworkAccessPolicies/default/initiate?api-version=2015-06-01-preview"
-$Body = "{""requests"":[{""content"":{""virtualMachines"":[{""id"":""$($vmInfo[0])"",""ports"":[{""number"":3389,""duration"":""PT$($hours)H"",""allowedSourceAddressPrefix"":""$ip""}]}]},""httpMethod"":""POST"",""name"":""$requestName"",""requestHeaderDetails"":{""commandName"":""Microsoft_Azure_Compute.""},""url"":""$EndPoint""}]}" | ConvertTo-Json
-$Url="https://management.azure.com/batch?api-version=2020-06-01"
+    $EndPoint = "https://management.azure.com/subscriptions/$($matches.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.Security/locations/$($vmInfo[1])/jitNetworkAccessPolicies/default/initiate?api-version=2015-06-01-preview"
+    $Body = "{""requests"":[{""content"":{""virtualMachines"":[{""id"":""$($vmInfo[0])"",""ports"":[{""number"":3389,""duration"":""PT3H"",""allowedSourceAddressPrefix"":""$ip""}]}]},""httpMethod"":""POST"",""name"":""$requestName"",""requestHeaderDetails"":{""commandName"":""Microsoft_Azure_Compute.""},""url"":""$EndPoint""}]}" | ConvertTo-Json
+    $Url="https://management.azure.com/batch?api-version=2020-06-01"
 
-# Send the jit-request
-$response = az rest --verbose --method post --uri "$Url" --body "$Body"
+    # Send the jit-request
+    $response = az rest --method post --uri "$Url" --body "$Body" # --verbose 
 
-# Construct the request to check status.While a request is in 'Initiating' status, the request is still being applied.
-$requestName = New-Guid
-$Body2 = "{""requests"":[{""httpMethod"":""GET"",""name"":""$requestName"",""requestHeaderDetails"":{""commandName"":""Microsoft_Azure_Compute.""},""url"":""https://management.azure.com/subscriptions/$($matches.SubscriptionId)/resourceGroups/$rgName/providers/Microsoft.Security/locations/$location/jitNetworkAccessPolicies/default?api-version=2015-06-01-preview""}]}" | ConvertTo-Json
-$response = az rest --verbose --method post --uri "$Url" --body "$Body2" --query "responses[].content.properties.requests[?virtualMachines[?ports[?status=='Initiating']]].startTimeUtc" | ConvertFrom-Json
-while($response.Length -gt 0) {
-    Start-Sleep -Seconds 2
-    $response = az rest --verbose --method post --uri "$Url" --body "$Body2" --query "responses[].content.properties.requests[?virtualMachines[?ports[?status=='Initiating']]].startTimeUtc" | ConvertFrom-Json
+    # Construct the request to check status.While a request is in 'Initiating' status, the request is still being applied.
+    $requestName = New-Guid
+    $Body2 = "{""requests"":[{""httpMethod"":""GET"",""name"":""$requestName"",""requestHeaderDetails"":{""commandName"":""Microsoft_Azure_Compute.""},""url"":""https://management.azure.com/subscriptions/$($matches.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.Security/locations/$($vmInfo[1])/jitNetworkAccessPolicies/default?api-version=2015-06-01-preview""}]}" | ConvertTo-Json
+    $response = az rest --method post --uri "$Url" --body "$Body2" --query "responses[].content.properties.requests[?virtualMachines[?ports[?status=='Initiating']]].startTimeUtc" | ConvertFrom-Json
+    while($response.Length -gt 0) {
+        Start-Sleep -Seconds 2
+        $response = az rest --method post --uri "$Url" --body "$Body2" --query "responses[].content.properties.requests[?virtualMachines[?ports[?status=='Initiating']]].startTimeUtc" | ConvertFrom-Json
+    }
+
+    $response = az rest --method post --uri "$Url" --body "$Body2" --query "responses[].content.properties.requests[?virtualMachines[?ports[?status=='Initiated']]].startTimeUtc" | ConvertFrom-Json
+    if( $response.Length -eq 0) {
+        Write-Error "Something went wrong"
+    }
+    else {
+        Write-Information "Request is granted."
+    }
 }
 
-$response = az rest --verbose --method post --uri "$Url" --body "$Body2" --query "responses[].content.properties.requests[?virtualMachines[?ports[?status=='Initiated']]].startTimeUtc" | ConvertFrom-Json
-if( $response.Length -eq 0) {
-    Write-Error "Something went wrong"
-}
-else {
-    Write-Information "Request is granted."
+################################################################################
+# Get the DNS name for a VM that has only one public ip
+################################################################################
+function Get-VmFqdn {
+    param(
+        $ResourceGroupName,
+        $VirtualMachineName
+    )
+    $ipName = (az vm list-ip-addresses -g $ResourceGroupName --name $VirtualMachineName --query "[0].virtualMachine.network.publicIpAddresses[0].name") -replace "`"", ""
+    $vmId = (az vm list-ip-addresses -g $ResourceGroupName --name $VirtualMachineName --query "[0].virtualMachine.network.publicIpAddresses[0].name") -replace "`"", ""
+    $fqdn = (az network public-ip show -g $ResourceGroupName -n $ipName --query "dnsSettings.fqdn") -replace "`"", ""
+    $fqdn
 }
 
 ################################################################################
