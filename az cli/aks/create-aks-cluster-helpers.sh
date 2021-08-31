@@ -12,7 +12,7 @@
 #To use kubectl with a previously deployed cluster on Azure Kubernetes Service (AKS), you must set the cluster context with the following Azure CLI command:
 # az aks get-credentials --name <aks_cluster_name> --resource-group <azure_resource_group_name>
 
-#05c25b78-003c-49ef-8f02-b24ca4aca086
+#
 #aks
 #northeurope
 #Standard_DS3_v2
@@ -24,16 +24,16 @@
 PS C:\l\temp\bdc-deploy-ps> az ad sp create-for-rbac --skip-assignment --name AKS_sqlbigdata2
 Changing "AKS_sqlbigdata2" to a valid URI of "http://AKS_sqlbigdata2", which is the required format used for service principal names
 {
-  "appId": "57855b60-49bc-413f-84aa-c3e94bc86663",
+  "appId": "",
   "displayName": "AKS_sqlbigdata2",
   "name": "http://AKS_sqlbigdata2",
-  "password": "24cc6470-485c-49f4-b2d5-b6c7605c2273",
-  "tenant": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+  "password": "",
+  "tenant": ""
 }
-PS C:\l\temp\bdc-deploy-ps> az aks create --name sqlbigdata2 --resource-group bdc2 --ssh-key-value c:\l\home\.ssh\id_rsa.pub --node-vm-size Standard_DS3_v2 --node-count 3 --service-principal 57855b60-49bc-413f-84aa-c3e94bc86663 --client-secret 24cc6470-485c-49f4-b2d5-b6c7605c2273
+PS C:\l\temp\bdc-deploy-ps> az aks create --name sqlbigdata2 --resource-group bdc2 --ssh-key-value c:\l\home\.ssh\id_rsa.pub --node-vm-size Standard_DS3_v2 --node-count 3 --service-principal  --client-secret 
  - Running ..
 
-PS C:\l\temp\bdc-deploy-ps> az aks create --name sqlbigdata2 --resource-group bdc2 --ssh-key-value c:\l\home\.ssh\id_rsa.pub --node-vm-size Standard_DS3_v2 --node-count 3 --service-principal 57855b60-49bc-413f-84aa-c3e94bc86663 --client-secret 24cc6470-485c-49f4-b2d5-b6c7605c2273
+PS C:\l\temp\bdc-deploy-ps> az aks create --name sqlbigdata2 --resource-group bdc2 --ssh-key-value c:\l\home\.ssh\id_rsa.pub --node-vm-size Standard_DS3_v2 --node-count 3 --service-principal  --client-secret 
 {
   "aadProfile": null,
   "addonProfiles": null,
@@ -52,7 +52,7 @@ PS C:\l\temp\bdc-deploy-ps> az aks create --name sqlbigdata2 --resource-group bd
   "dnsPrefix": "sqlbigdata-bdc2-05c25b",
   "enableRbac": true,
   "fqdn": "sqlbigdata-bdc2-05c25b-8a3f4892.hcp.northeurope.azmk8s.io",
-  "id": "/subscriptions/05c25b78-003c-49ef-8f02-b24ca4aca086/resourcegroups/bdc2/providers/Microsoft.ContainerService/managedClusters/sqlbigdata2",
+  "id": "/subscriptions//resourcegroups/bdc2/providers/Microsoft.ContainerService/managedClusters/sqlbigdata2",
   "kubernetesVersion": "1.14.8",
   "linuxProfile": {
     "adminUsername": "azureuser",
@@ -78,7 +78,7 @@ PS C:\l\temp\bdc-deploy-ps> az aks create --name sqlbigdata2 --resource-group bd
   "provisioningState": "Succeeded",
   "resourceGroup": "bdc2",
   "servicePrincipalProfile": {
-    "clientId": "57855b60-49bc-413f-84aa-c3e94bc86663",
+    "clientId": "",
     "secret": null
   },
   "tags": null,
