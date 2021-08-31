@@ -1,0 +1,60 @@
+﻿# Create a VM from an existing managed disk
+
+$virtualMachineName = ''
+$resourceGroupName = ''
+$osType = ''
+$location = ''
+$size = ''
+$subnet = ''
+$vnetName = ''
+$managedDiskName = ''
+
+
+#Get the resource Id of the managed disk
+$managedDiskId = (az disk show --name $managedDiskName --resource-group $resourceGroupName --query [id] -o tsv)
+
+#Create VM by attaching existing managed disks as OS
+az vm create --name $virtualMachineName --resource-group $resourceGroupName --attach-os-disk $managedDiskId --os-type $osType -l $location --size $size --subnet $subnet --vnet-name $vnetName
+
+
+
+
+# create a vm from scratch
+$virtualMachineName = ''
+$resourceGroupName = ''
+$osType = 'windows'
+$location = 'westeurope'
+$size = 'Standard_D8ds_v4'
+$subnet = 'default'
+$vnetName = ''
+$imageUrn = 'MicrosoftWindowsDesktop:Windows-10:21h1-ent-g2:19043.1165.2108031819'
+$password = ''
+$username = ''
+$bootDiagnosticsStorage = ''
+
+
+az vm create -n $virtualMachineName -g $resourceGroupName --location $location --image $imageUrn `
+    --admin-password $password --admin-username $username --boot-diagnostics-storage $bootDiagnosticsStorage `
+    --data-disk-sizes-gb 512 --enable-agent true --os-disk-name "$($virtualMachineName)_OsDisk" `
+    --public-ip-address "$($virtualMachineName)-ip" --public-ip-address-allocation static `
+    --public-ip-address-dns-name "$($virtualMachineName)" `
+    --public-ip-sku standard --size $size --subnet $subnet --vnet-name $vnetName `
+    --verbose `
+    --validate
+
+
+
+# Helper commands
+
+# List all publishers
+az vm image list-publishers -l westeurope
+az vm image list-publishers -l westeurope --query "[?starts_with(name, 'MicrosoftWindows')].name"
+
+# List all VM images
+az vm image list --all
+# List all VM images from a publisher
+az vm image list --all --location westeurope --publisher MicrosoftWindowsDesktop --query "[].[offer,sku,version,urn]" -o table
+az vm image list --all --location westeurope --publisher MicrosoftWindowsDesktop --query "[?starts_with(sku, '21')].[offer,sku,version,urn]" -o table
+az vm image list --all --location westeurope --publisher MicrosoftWindowsDesktop --query "[?starts_with(sku, '21') && offer=='Windows-10'].[offer,sku,version,urn]" -o table
+
+az vm image list --all --location westeurope --publisher MicrosoftWindowsDesktop --offer 'Windows-10' --sku '21h1-ent-g2'

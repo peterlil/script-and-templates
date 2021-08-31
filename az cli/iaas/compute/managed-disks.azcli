@@ -1,0 +1,26 @@
+﻿
+# Copy a managed disk across regions
+# https://docs.microsoft.com/en-us/azure/virtual-machines/linux/disks-upload-vhd-to-managed-disk-cli
+
+$sourceDiskName = ''
+$sourceRG = ''
+$targetDiskName = ''
+$targetRG = ''
+$targetLocation = ''
+$pathToAzCopy = ";C:\Program Files\azcopy" # If azcopy is already in your path, use an empty string here
+
+$sourceDiskSizeBytes = [int64](az disk show -g $sourceRG -n $sourceDiskName --query '[diskSizeBytes]' -o tsv)
+
+az disk create -g $targetRG -n $targetDiskName -l $targetLocation --for-upload --upload-size-bytes $(($sourceDiskSizeBytes+512)) --sku standard_lrs
+
+$targetSASURI = (az disk grant-access -n $targetDiskName -g $targetRG  --access-level Write --duration-in-seconds 86400 -o tsv)
+
+$sourceSASURI = (az disk grant-access -n $sourceDiskName -g $sourceRG --duration-in-seconds 86400 --query [accessSas] -o tsv)
+
+$env:Path += $pathToAzCopy
+
+azcopy copy $sourceSASURI $targetSASURI --blob-type PageBlob
+
+az disk revoke-access -n $sourceDiskName -g $sourceRG
+
+az disk revoke-access -n $targetDiskName -g $targetRG

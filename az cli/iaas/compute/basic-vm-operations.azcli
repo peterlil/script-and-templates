@@ -55,7 +55,7 @@ function Request-JitAccess {
     $requestName = New-Guid
 
     $EndPoint = "https://management.azure.com/subscriptions/$($matches.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.Security/locations/$($vmInfo[1])/jitNetworkAccessPolicies/default/initiate?api-version=2015-06-01-preview"
-    $Body = "{""requests"":[{""content"":{""virtualMachines"":[{""id"":""$($vmInfo[0])"",""ports"":[{""number"":3389,""duration"":""PT3H"",""allowedSourceAddressPrefix"":""$ip""}]}]},""httpMethod"":""POST"",""name"":""$requestName"",""requestHeaderDetails"":{""commandName"":""Microsoft_Azure_Compute.""},""url"":""$EndPoint""}]}" | ConvertTo-Json
+    $Body = "{""requests"":[{""content"":{""virtualMachines"":[{""id"":""$($vmInfo[0])"",""ports"":[{""number"":3389,""duration"":""PT10H"",""allowedSourceAddressPrefix"":""$ip""}]}]},""httpMethod"":""POST"",""name"":""$requestName"",""requestHeaderDetails"":{""commandName"":""Microsoft_Azure_Compute.""},""url"":""$EndPoint""}]}" | ConvertTo-Json
     $Url="https://management.azure.com/batch?api-version=2020-06-01"
 
     # Send the jit-request
