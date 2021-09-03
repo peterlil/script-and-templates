@@ -129,6 +129,10 @@ Function Request-JitAccess {
         }
         else {
             Write-Host "Jit request is granted."
+            $ipName = (az vm list-ip-addresses -g $ResourceGroupName --name $VirtualMachineName --query "[0].virtualMachine.network.publicIpAddresses[0].name") -replace "`"", ""
+            $fqdn = (az network public-ip show -g $ResourceGroupName -n $ipName --query "dnsSettings.fqdn") -replace "`"", ""
+        
+            Write-Host "Execute this command to start the remote session: mstsc.exe /v:$fqdn"
         }
     }
 
