@@ -88,7 +88,6 @@ function Get-VmFqdn {
         $VirtualMachineName
     )
     $ipName = (az vm list-ip-addresses -g $ResourceGroupName --name $VirtualMachineName --query "[0].virtualMachine.network.publicIpAddresses[0].name") -replace "`"", ""
-    # $vmId = (az vm list-ip-addresses -g $ResourceGroupName --name $VirtualMachineName --query "[0].virtualMachine.network.publicIpAddresses[0].name") -replace "`"", ""
     $fqdn = (az network public-ip show -g $ResourceGroupName -n $ipName --query "dnsSettings.fqdn") -replace "`"", ""
     $fqdn
 }
