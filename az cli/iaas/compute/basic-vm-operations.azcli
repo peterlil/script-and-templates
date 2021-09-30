@@ -58,7 +58,7 @@ function Request-JitAccess {
     $Body = "{""requests"":[{""content"":{""virtualMachines"":[{""id"":""$($vmInfo[0])"",""ports"":[{""number"":3389,""duration"":""PT10H"",""allowedSourceAddressPrefix"":""$ip""}]}]},""httpMethod"":""POST"",""name"":""$requestName"",""requestHeaderDetails"":{""commandName"":""Microsoft_Azure_Compute.""},""url"":""$EndPoint""}]}" | ConvertTo-Json
     $Url="https://management.azure.com/batch?api-version=2020-06-01"
 
-    # Send the jit-request
+    # Send the jit-request #
     $response = az rest --method post --uri "$Url" --body "$Body" # --verbose 
 
     # Construct the request to check status.While a request is in 'Initiating' status, the request is still being applied.
