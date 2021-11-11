@@ -11,3 +11,6 @@ List only the names of the subscriptions \
 
 List only specific subscriptions by name \
 `az account list --query "[?name=='Personal Azure Training' || name=='Personal Azure Training']"`
+
+List only the current subscription \
+`az account list --query "[?isDefault]"`
