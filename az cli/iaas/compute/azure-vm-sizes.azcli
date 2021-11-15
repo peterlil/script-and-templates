@@ -1,0 +1,3 @@
+# PowerShell
+$location = "Sweden Central"
+az vm list-sizes -l $location --query "[].name" -o tsv

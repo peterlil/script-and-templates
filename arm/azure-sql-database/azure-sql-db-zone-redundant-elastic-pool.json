@@ -1,0 +1,74 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serverName": {
+            "type": "string"
+        },
+        "serverLocation": {
+            "type": "string"
+        },
+        "elasticPoolName": {
+            "type": "string"
+        },
+        "skuName": {
+            "type": "string"
+        },
+        "tier": {
+            "type": "string"
+        },
+        "poolLimit": {
+            "type": "string"
+        },
+        "poolSize": {
+            "type": "int"
+        },
+        "perDatabasePerformanceMin": {
+            "type": "string"
+        },
+        "perDatabasePerformanceMax": {
+            "type": "string"
+        },
+        "zoneRedundant": {
+            "type": "bool",
+            "defaultValue": false
+        },
+        "licenseType": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "elasticPoolTags": {
+            "type": "object",
+            "defaultValue": {}
+        },
+        "maintenanceConfigurationId": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "name": "[concat(parameters('serverName'), '/', parameters('elasticPoolName'))]",
+            "tags": "[parameters('elasticPoolTags')]",
+            "location": "[parameters('serverLocation')]",
+            "type": "Microsoft.Sql/servers/elasticpools",
+            "apiVersion": "2021-02-01-preview",
+            "sku": {
+                "name": "[parameters('skuName')]",
+                "tier": "[parameters('tier')]",
+                "capacity": "[parameters('poolLimit')]"
+            },
+            "properties": {
+                "perDatabaseSettings": {
+                    "minCapacity": "[parameters('perDatabasePerformanceMin')]",
+                    "maxCapacity": "[parameters('perDatabasePerformanceMax')]"
+                },
+                "maxSizeBytes": "[parameters('poolSize')]",
+                "zoneRedundant": "[parameters('zoneRedundant')]",
+                "licenseType": "[parameters('licenseType')]",
+                "maintenanceConfigurationId": "[parameters('maintenanceConfigurationId')]"
+            }
+        }
+    ]
+}

@@ -1,0 +1,45 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serverName": {
+            "value": "swesqlsrv"
+        },
+        "serverLocation": {
+            "value": "swedencentral"
+        },
+        "elasticPoolName": {
+            "value": "swesqldb-elastic-pool"
+        },
+        "skuName": {
+            "value": "PremiumPool"
+        },
+        "tier": {
+            "value": "Premium"
+        },
+        "poolLimit": {
+            "value": "125"
+        },
+        "poolSize": {
+            "value": 268435456000
+        },
+        "perDatabasePerformanceMin": {
+            "value": "0"
+        },
+        "perDatabasePerformanceMax": {
+            "value": "125"
+        },
+        "zoneRedundant": {
+            "value": true
+        },
+        "licenseType": {
+            "value": "LicenseIncluded"
+        },
+        "elasticPoolTags": {
+            "value": {}
+        },
+        "maintenanceConfigurationId": {
+            "value": "/subscriptions/05c25b78-003c-49ef-8f02-b24ca4aca086/providers/Microsoft.Maintenance/publicMaintenanceConfigurations/SQL_Default"
+        }
+    }
+}

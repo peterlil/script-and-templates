@@ -9,13 +9,10 @@
             "value": "swesqldb-single-instance"
         },
         "tier": {
-            "value": "GeneralPurpose"
+            "value": "Premium"
         },
         "skuName": {
-            "value": "GP_S_Gen5_1"
-        },
-        "location": {
-            "value": "swedencentral"
+            "value": "P1"
         },
         "maxSizeBytes": {
             "value": 1073741824
@@ -23,40 +20,25 @@
         "sampleName": {
             "value": "AdventureWorksLT"
         },
+        "serverLocation": {
+            "value": "swedencentral"
+        },
         "serverName": {
             "value": "swesqlsrv"
+        },
+        "zoneRedundant": {
+            "value": true
         },
         "licenseType": {
             "value": ""
         },
         "readScaleOut": {
-            "value": "Disabled"
-        },
-        "zoneRedundant": {
-            "value": true
-        },
-        "minCapacity": {
-            "value": "0.5"
-        },
-        "autoPauseDelay": {
-            "value": "60"
+            "value": "Enabled"
         },
         "numberOfReplicas": {
-            "value": 0
-        },
-        "allowAzureIps": {
-            "value": false
-        },
-        "allowClientIp": {
-            "value": false
-        },
-        "clientIpValue": {
-            "value": "51.107.180.53"
+            "value": 1
         },
         "databaseTags": {
-            "value": {}
-        },
-        "serverTags": {
             "value": {}
         },
         "enableSqlLedger": {
@@ -102,7 +84,7 @@
             "value": false
         },
         "privateEndpointNestedTemplateId": {
-            "value": "pe-e21afc2f-d7f7-4353-add2-fd25cae90024"
+            "value": "pe-52107e86-1ada-45ed-98ab-6d27d3135018"
         },
         "privateEndpointSubscriptionId": {
             "value": ""
@@ -144,7 +126,7 @@
             "value": "privatelink.database.windows.net"
         },
         "privateEndpointDnsRecordUniqueId": {
-            "value": "e21afc2f-d7f7-4353-add2-fd25cae90027"
+            "value": "52107e86-1ada-45ed-98ab-6d27d3135019"
         },
         "privateEndpointTemplateLink": {
             "value": "https://sqlazureextension.hosting.portal.azure.net/sqlazureextension/Content/2.1.01731186/DeploymentTemplates/PrivateEndpoint.json"
@@ -158,31 +140,8 @@
         "privateDnsForPrivateEndpointIpConfigTemplateLink": {
             "value": "https://sqlazureextension.hosting.portal.azure.net/sqlazureextension/Content/2.1.01731186/DeploymentTemplates/PrivateDnsForPrivateEndpointIpConfig.json"
         },
-        "clientIpRuleName": {
-            "value": "ClientIp-2021-9-30_9-10-21"
-        },
-        "minimalTlsVersion": {
-            "value": "1.2"
-        },
-        "connectionType": {
-            "value": "Default"
-        },
         "requestedBackupStorageRedundancy": {
-            "value": "Zone"
-        },
-        "administratorLogin": {
-            "value": "pladmin"
-        },
-        "administratorLoginPassword": {
-            "value": null
-        },
-        "identity": {
-            "value": {
-                "type": "None"
-            }
-        },
-        "primaryUserAssignedIdentityId": {
-            "value": ""
+            "value": "Geo"
         }
     }
 }
