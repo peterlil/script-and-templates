@@ -186,8 +186,12 @@ Function Get-VmPassword {
         [string]$name
     )
     
+    if( $env:DefaultSubscriptionId -eq $null ) {
+        $env:DefaultSubscriptionId = az account list --query "[?isDefault].id" | ConvertFrom-Json
+    }
+
     $value = az keyvault secret show -n $name `
-        --subscription 05c25b78-003c-49ef-8f02-b24ca4aca086 `
+        --subscription $env:DefaultSubscriptionId `
         --vault-name devboxes-vm-encrypt `
         --query "value" `
         -o tsv
