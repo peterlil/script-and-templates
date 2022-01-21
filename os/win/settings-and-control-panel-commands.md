@@ -2,11 +2,11 @@
 
 ## Table of commands
 
-Control Panel Item                              | Commands
-------------------------------------------------|---------
-Accounts - Access Work or School                | start ms-settings:workplace
-Add a Device wizard | %windir%\System32\DevicePairingWizard.exe
-Add Hardware wizaCommand line table from TenForumsrd | %windir%\System32\hdwwiz.exe
+Control Panel Item                                 | Commands
+---------------------------------------------------|---------
+Accounts - Access Work or School                   | start ms-settings:workplace
+Add a Device wizard                                | %windir%\System32\DevicePairingWizard.exe
+Add Hardware wizaCommand line table from TenForums | %windir%\System32\hdwwiz.exe
 Add a Printer wizard | rundll32.exe shell32.dll,SHHelpShortcuts_RunDLL AddPrinter
 Additional Clocks | rundll32.exe shell32.dll,Control_RunDLL timedate.cpl,,1
 Administrative Tools | control /name Microsoft.AdministrativeTools <br/> OR <br/> control admintools
