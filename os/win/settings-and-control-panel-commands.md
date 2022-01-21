@@ -4,6 +4,7 @@
 
 Control Panel Item                              | Commands
 ------------------------------------------------|---------
+Accounts - Access Work or School                | start ms-settings:workplace
 Add a Device wizard | %windir%\System32\DevicePairingWizard.exe
 Add Hardware wizaCommand line table from TenForumsrd | %windir%\System32\hdwwiz.exe
 Add a Printer wizard | rundll32.exe shell32.dll,SHHelpShortcuts_RunDLL AddPrinter
@@ -76,6 +77,7 @@ Security and Maintenance | control /name Microsoft.ActionCenter <br/> OR <br/> c
 Set Associations | control /name Microsoft.DefaultPrograms /page pageFileAssoc
 Set Default Programs | control /name Microsoft.DefaultPrograms /page pageDefaultProgram
 Set Program Access and Computer Defaults | rundll32.exe shell32.dll,Control_RunDLL appwiz.cpl,,3
+Settings | start ms-settings:
 Sound (Playback tab) | control /name Microsoft.Sound <br/> OR <br/> control mmsys.cpl <br/> OR <br/> %windir%\System32\rundll32.exe shell32.dll,Control_RunDLL mmsys.cpl,,0
 Sound (Recording tab) | %windir%\System32\rundll32.exe shell32.dll,Control_RunDLL mmsys.cpl,,1
 Sound (Sounds tab) | %windir%\System32\rundll32.exe shell32.dll,Control_RunDLL mmsys.cpl,,2
@@ -106,3 +108,4 @@ Work Folders | %windir%\System32\WorkFolders.exe
 
 ## References
 [Command line table from TenForums](https://www.tenforums.com/tutorials/86339-list-commands-open-control-panel-items-windows-10-a.html)
+[List of ms-settings uri commands](https://4sysops.com/wiki/list-of-ms-settings-uri-commands-to-open-specific-settings-in-windows-10/history/?revision=1558411)
