@@ -11,3 +11,4 @@ View cluster status | `az aks show --name <clustername> --resource-group <rgname
 Explanation | Command
 ----------- | -------
 Configure a context for a namespace |`kubectl config set-context <name> --namespace=<namespace> --cluster=<clustername> --user=<user>`
+ssh to a pod | `kubectl exec <podname> -i -t -- bash -il`
