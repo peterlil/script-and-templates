@@ -10,4 +10,4 @@ View cluster status | `az aks show --name <clustername> --resource-group <rgname
 ## kubectl basics
 Explanation | Command
 ----------- | -------
-Configure a context for a namespace |`kubectl config set-context shgw --namespace=shgw --cluster=<clustername> --user=<user>`
+Configure a context for a namespace |`kubectl config set-context <name> --namespace=<namespace> --cluster=<clustername> --user=<user>`
