@@ -1,0 +1,30 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <table class="table table-dark table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Field</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Backend API URI</td>
+                <td>@Model.ApiUri</td>
+            </tr>
+            <tr>
+                <td>Caller</td>
+                <td>@Model.CallingIp</td>
+            </tr>
+        </tbody>
+    </table>
+    <p>
+        @Model.WeatherSummary
+    </p>
+</div>

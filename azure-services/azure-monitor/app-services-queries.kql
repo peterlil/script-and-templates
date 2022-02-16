@@ -1,0 +1,176 @@
+// Total executions and errors on a timechart
+let dtStart = ago(4d);
+let dtEnd = ago(3d);
+FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Category startswith "Function." and Message startswith "Executed ")
+    | summarize BigCount = count() by bin(TimeGenerated, 5min)
+    | project TimeGenerated, Count=tolong(round(BigCount/10,0)), MetricName="Executions"
+| union (
+    FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Level == "Error")
+    | summarize Count = count() by bin(TimeGenerated, 5min)
+    | project TimeGenerated, Count, MetricName="Errors"
+)
+| project TimeGenerated, Count, MetricName
+| render timechart
+
+let dtStart = ago(4d);
+let dtEnd = ago(3d);
+FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Category startswith "Function." and Message startswith "Executed ")
+    | summarize BigCount = count() by bin(TimeGenerated, 5min), FunctionName
+    | project TimeGenerated, FunctionName, Count=tolong(round(BigCount/10,0)), MetricName="Executions"
+| union (
+    FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Level == "Error")
+    | summarize Count = count() by bin(TimeGenerated, 5min), FunctionName
+    | project TimeGenerated, FunctionName, Count, MetricName="Errors"
+)
+| project TimeGenerated, Count, FunctionMetric=strcat(FunctionName, ".", MetricName)
+| render timechart
+
+
+// It seems like the only changefeed with issues is the OptionGroupChangeFeed
+let dtStart = ago(4d);
+let dtEnd = ago(3d);
+FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Level == "Error")
+    | where FunctionName == "OptionGroupChangeFeed"
+    | where ExceptionDetails contains "PathNotFoundException"
+    | summarize Count=count()
+    | project ExceptionName="PathNotFoundException", Count
+| union (
+    FunctionAppLogs
+        | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+        | where (Level == "Error")
+        | where FunctionName == "OptionGroupChangeFeed"
+        | where ExceptionDetails !contains "PathNotFoundException"
+        | summarize Count=count()
+        | project ExceptionName="Other", Count
+    )
+
+let dtStart = ago(4d);
+let dtEnd = ago(3d);
+FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Level == "Error")
+    | where FunctionName !startswith "Functions."
+    | summarize Count = count() by FunctionName
+    | project FunctionName, Count
+    | render columnchart 
+
+
+// It seems like the only changefeed with issues is the OptionGroupChangeFeed
+let dtStart = ago(4d);
+let dtEnd = ago(3d);
+FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Level == "Error")
+    | where FunctionName == "OptionGroupChangeFeed"
+    | where ExceptionDetails contains "PathNotFoundException"
+    | summarize Count=count()
+    | project ExceptionName="PathNotFoundException", Count
+| union (
+    FunctionAppLogs
+        | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+        | where (Level == "Error")
+        | where FunctionName == "OptionGroupChangeFeed"
+        | where ExceptionDetails !contains "PathNotFoundException"
+        | summarize Count=count()
+        | project ExceptionName="Other", Count
+    )
+
+
+// It seems like the only changefeed with issues is the ProductByProductIdSeason
+let dtStart = ago(4d);
+let dtEnd = ago(3d);
+FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Level == "Error")
+    | where FunctionName == "ProductByProductIdSeason"
+    | where ExceptionDetails contains "DocumentClientException : The request rate is too large"
+    | summarize Count=count()
+    | project ExceptionName="DocumentClientException", Count
+| union (
+    FunctionAppLogs
+        | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+        | where (Level == "Error")
+        | where FunctionName == "ProductByProductIdSeason"
+        | where ExceptionDetails !contains "DocumentClientException : The request rate is too large"
+        | summarize Count=count()
+        | project ExceptionName="Other", Count
+    )
+
+
+// It seems like the only changefeed with issues is the ProductByProductIdSeason
+let dtStart = ago(4d);
+let dtEnd = ago(3d);
+FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Level == "Error")
+    | where FunctionName == "ProductById"
+    | where ExceptionDetails contains "DocumentClientException : The request rate is too large"
+    | summarize Count=count()
+    | project ExceptionName="DocumentClientException", Count
+| union (
+    FunctionAppLogs
+        | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+        | where (Level == "Error")
+        | where FunctionName == "ProductByProductIdSeason"
+        | where ExceptionDetails !contains "DocumentClientException : The request rate is too large"
+        | summarize Count=count()
+        | project ExceptionName="Other", Count
+    )
+
+// It seems like the only changefeed with issues is the ProductByProductIdSeason
+let dtStart = ago(4d);
+let dtEnd = ago(3d);
+FunctionAppLogs
+    | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+    | where (Level == "Error")
+    | where FunctionName == "ProductById"
+    | where ExceptionDetails contains "DocumentClientException : The request rate is too large"
+    | summarize Count=count()
+    | project ExceptionName="DocumentClientException", Count
+| union (
+    FunctionAppLogs
+        | where TimeGenerated > dtStart and TimeGenerated < dtEnd
+        | where (Level == "Error")
+        | where FunctionName == "ProductById"
+        | where ExceptionDetails !contains "DocumentClientException : The request rate is too large"
+        | summarize Count=count()
+        | project ExceptionName="Other", Count
+    )
+
+
+
+// failed request count by name
+let start=datetime("2022-02-10T13:41:00.000Z");
+let end=datetime("2022-02-11T13:41:00.000Z");
+let timeGrain=5m;
+let dataset=requests
+    // additional filters can be applied here
+    | where timestamp > start and timestamp < end
+    | where client_Type != "Browser"
+;
+dataset
+// change 'operation_Name' on the below line to segment by a different property
+| summarize
+    failedCount=sumif(itemCount, success == false),
+    impactedUsers=dcountif(user_Id, success == false),
+    totalCount=sum(itemCount)
+    by operation_Name
+// calculate failed request count for all requests
+| union(dataset
+    | summarize
+        failedCount=sumif(itemCount, success == false),
+        impactedUsers=dcountif(user_Id, success == false),
+        totalCount=sum(itemCount)
+    | extend operation_Name="Overall")
+| where failedCount > 0
+| order by failedCount desc
