@@ -58,3 +58,7 @@ az vm image list --all --location westeurope --publisher MicrosoftWindowsDesktop
 az vm image list --all --location westeurope --publisher MicrosoftWindowsDesktop --query "[?starts_with(sku, '21') && offer=='Windows-10'].[offer,sku,version,urn]" -o table
 
 az vm image list --all --location westeurope --publisher MicrosoftWindowsDesktop --offer 'Windows-10' --sku '21h1-ent-g2'
+
+az vm image list --all --location westindia --offer ubuntu -o table
+az vm image list --all --location westindia --publisher canonical --offer ubuntu-server --sku 20_04-lts-gen2 -o table
+
