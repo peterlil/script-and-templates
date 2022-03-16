@@ -1,159 +1,45 @@
-resource symbolicname 'Microsoft.App/containerApps@2022-01-01-preview' = {
-  name: 'string'
-  location: 'string'
-  tags: {
-    tagName1: 'tagValue1'
-    tagName2: 'tagValue2'
+// This bicep does not work yet. Haven't gotten the passwordSecretRef to work
+param location string = resourceGroup().location
+param secrets array = [
+  {
+    name: 'registry-password'
+    value: containerRegistryPassword
   }
-  identity: {
-    type: 'string'
-    userAssignedIdentities: {}
-  }
+]
+
+@secure()
+param containerRegistryPassword string
+
+var registrySecretRefName = 'registry-password'
+
+resource acaC 'Microsoft.App/containerApps@2022-01-01-preview' = {
+  name: 'aca-c'
+  location: location
   properties: {
     configuration: {
-      activeRevisionsMode: 'string'
-      dapr: {
-        appId: 'string'
-        appPort: int
-        appProtocol: 'string'
-        enabled: bool
-      }
       ingress: {
-        allowInsecure: bool
-        customDomains: [
-          {
-            bindingType: 'string'
-            certificateId: 'string'
-            name: 'string'
-          }
-        ]
-        external: bool
-        targetPort: int
-        traffic: [
-          {
-            latestRevision: bool
-            revisionName: 'string'
-            weight: int
-          }
-        ]
-        transport: 'string'
+        allowInsecure: false
+        external: true
+        targetPort: 443
       }
       registries: [
         {
-          passwordSecretRef: 'string'
-          server: 'string'
-          username: 'string'
-        }
-      ]
-      secrets: [
-        {
-          name: 'string'
-          value: 'string'
+          server: 'mcr.microsoft.com'
+          username: 'someuser'
+          passwordSecretRef: registrySecretRefName
         }
       ]
     }
-    managedEnvironmentId: 'string'
+    managedEnvironmentId: '/subscriptions/05c25b78-003c-49ef-8f02-b24ca4aca086/resourceGroups/aca/providers/Microsoft.Web/kubeEnvironments/aca-env-a'
     template: {
       containers: [
         {
-          args: [
-            'string'
-          ]
-          command: [
-            'string'
-          ]
-          env: [
-            {
-              name: 'string'
-              secretRef: 'string'
-              value: 'string'
-            }
-          ]
-          image: 'string'
-          name: 'string'
-          probes: [
-            {
-              failureThreshold: int
-              httpGet: {
-                host: 'string'
-                httpHeaders: [
-                  {
-                    name: 'string'
-                    value: 'string'
-                  }
-                ]
-                path: 'string'
-                port: int
-                scheme: 'string'
-              }
-              initialDelaySeconds: int
-              periodSeconds: int
-              successThreshold: int
-              tcpSocket: {
-                host: 'string'
-                port: int
-              }
-              terminationGracePeriodSeconds: int
-              timeoutSeconds: int
-              type: 'string'
-            }
-          ]
+          image: 'azuredocs/containerapps-helloworld:latest'
+          name: 'simple-hello-world-container'
           resources: {
-            cpu: int
-            memory: 'string'
+            cpu: '0.25'
+            memory: '0.5Gi'
           }
-          volumeMounts: [
-            {
-              mountPath: 'string'
-              volumeName: 'string'
-            }
-          ]
-        }
-      ]
-      revisionSuffix: 'string'
-      scale: {
-        maxReplicas: int
-        minReplicas: int
-        rules: [
-          {
-            azureQueue: {
-              auth: [
-                {
-                  secretRef: 'string'
-                  triggerParameter: 'string'
-                }
-              ]
-              queueLength: int
-              queueName: 'string'
-            }
-            custom: {
-              auth: [
-                {
-                  secretRef: 'string'
-                  triggerParameter: 'string'
-                }
-              ]
-              metadata: {}
-              type: 'string'
-            }
-            http: {
-              auth: [
-                {
-                  secretRef: 'string'
-                  triggerParameter: 'string'
-                }
-              ]
-              metadata: {}
-            }
-            name: 'string'
-          }
-        ]
-      }
-      volumes: [
-        {
-          name: 'string'
-          storageName: 'string'
-          storageType: 'string'
         }
       ]
     }
