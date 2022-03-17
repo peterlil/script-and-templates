@@ -1,5 +1,8 @@
 # Protect your webapp and api using Application Gateway
 
+## Register the webapi in AAD
+
+
 ## Sample GitHub action for setting access restrictions on the api
 ```yaml
 # Deployment of the app-gw-multi-tenant-app-service solution
