@@ -13,3 +13,6 @@ az containerapp env show -n aca-env-b -g aca --query staticIp --out json | tr -d
 ```
 
 [Full script to deploy with a private DNS zone](https://docs.microsoft.com/en-us/azure/container-apps/vnet-custom?tabs=bash&pivots=azure-cli#deploy-with-a-private-dns)
+
+
+## Create a simple container app, no vnet, public endpoint
