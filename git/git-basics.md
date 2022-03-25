@@ -26,6 +26,11 @@ To undo the last commit, and preserve the files in the current repo so you don't
 git reset --soft HEAD~1
 ```
 
+# List local branches
+```powershell
+git branch
+```
+
 # Delete a local branch
 It's common to want to delete a local branch, for instance after a pull request.
 ```powershell
