@@ -1,4 +1,4 @@
-# Git basics
+# Git/GitHub basics
 
 ## Set the git username and email
 
@@ -64,4 +64,11 @@ It's common to want to delete a local branch, for instance after a pull request.
 
 ```powershell
 git branch -d <local-branch>
+```
+
+## Delete a file from git, but not from disk
+
+```powershell
+git rm --cached <path-to-file>
+git commit -m "Remove file <file> from git."
 ```
