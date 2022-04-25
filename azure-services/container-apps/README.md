@@ -5,6 +5,8 @@
 ```bash
 rg=
 
+$somePwd=
+
 az deployment group create \
   --name SimpleContainerAppDeployment \
   --resource-group $rg \
