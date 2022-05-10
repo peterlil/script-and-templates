@@ -1,0 +1,40 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": { "value": "sweden central" },
+      "subnetName" : { "value": "sql1" },
+      "dataDisks": {
+        "value": [
+          {
+            "deleteOption": "Delete",
+            "caching": "ReadOnly",
+            "diskSizeInGB": 4,
+            "storageAccountType": "Premium_LRS",
+            "name": "data01"
+          },
+          {
+            "deleteOption": "Delete",
+            "caching": "ReadOnly",
+            "diskSizeInGB": 4,
+            "storageAccountType": "Premium_LRS",
+            "name": "data02"
+          },
+          {
+            "deleteOption": "Delete",
+            "caching": "None",
+            "diskSizeInGB": 4,
+            "storageAccountType": "Premium_LRS",
+            "name": "tlog01"
+          },
+          {
+            "deleteOption": "Delete",
+            "caching": "None",
+            "diskSizeInGB": 4,
+            "storageAccountType": "Premium_LRS",
+            "name": "tlog02"
+          }
+        ]
+      }
+    }
+  }

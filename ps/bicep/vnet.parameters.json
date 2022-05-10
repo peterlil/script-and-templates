@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": { "value": "sweden central" },
+      "vnetAddressPrefixes": {
+        "value": [
+          "10.0.0.0/16"
+        ]
+      },
+      "subnets": {
+        "value": [
+          {
+              "name": "sql1",
+              "addressPrefix": "10.0.1.0/24"
+          },
+          {
+            "name": "sql2",
+            "addressPrefix": "10.0.2.0/24"
+          }
+        ]
+      }
+    }
+  }

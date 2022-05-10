@@ -1,7 +1,7 @@
 # Manage tenants and subscriptions
 
-List all tenants \
-`az account tenant list`
+List all tenants (requires the extension _Accounts_)\
+`az account tenant list -o table`
 
 List all subscriptions \
 `az account list`
