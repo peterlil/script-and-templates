@@ -50,6 +50,10 @@ az vm create -n $virtualMachineName -g $resourceGroupName --location $location -
 az vm image list-publishers -l westeurope
 az vm image list-publishers -l westeurope --query "[?starts_with(name, 'MicrosoftWindows')].name"
 
+# List SQL Server on Windows images
+az vm image list --all -l swedencentral --publisher MicrosoftSQLServer -o table
+az vm image list --all -l swedencentral --publisher MicrosoftSQLServer --query "[?sku == 'sqldev' && offer=='sql2019-ws2022'].[offer,sku,version,urn]" -o table
+
 # List all VM images
 az vm image list --all
 # List all VM images from a publisher
