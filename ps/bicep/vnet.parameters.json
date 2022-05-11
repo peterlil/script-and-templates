@@ -11,12 +11,8 @@
       "subnets": {
         "value": [
           {
-              "name": "sql1",
+              "name": "subnet1",
               "addressPrefix": "10.0.1.0/24"
-          },
-          {
-            "name": "sql2",
-            "addressPrefix": "10.0.2.0/24"
           }
         ]
       }

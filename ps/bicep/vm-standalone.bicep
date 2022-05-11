@@ -1,6 +1,6 @@
 param location string = 'sweden central'
 param vnetAddressPrefixes array = [
-  '10.0.0.0/16'
+  '10.0.0.0/24'
 ]
 param subnets array
 param adminUsername string = 'vmhero'
@@ -8,9 +8,9 @@ param adminUsername string = 'vmhero'
 param adminPassword string
 param dataDisks array
 param vnetName string = 'vnet-${replace(location, ' ', '-')}'
+param nsgSourceIp string
 
-param vm1Name string = 'sql1'
-param vm2Name string = 'sql2'
+param vm1Name string = 'vm-${substring(uniqueString(resourceGroup().name), 0, 5)}'
 
 module vnetMod './vnet.bicep' = {
   name: 'vnetDeploy'
@@ -32,28 +32,34 @@ module vm1 './vm.bicep' = {
     adminPassword:adminPassword
     adminUsername:adminUsername
     dataDisks:dataDisks
-    ipAllocationMethod:'dynamic'
     location:location
     subnetName:subnets[0].name
     vnetName:vnetName
+    nsgSourceIp:nsgSourceIp
   }
 }
 
-module vm2 './vm.bicep' = {
-  name: 'vm2Deploy'
-  dependsOn: [
-    vnetMod
-  ]
-  params: {
-    vmName:vm2Name
-    adminPassword:adminPassword
-    adminUsername:adminUsername
-    dataDisks:dataDisks
-    ipAllocationMethod:'dynamic'
-    location:location
-    subnetName:subnets[1].name
-    vnetName:vnetName
-  }
-}
 
-//az deployment group create -g test --mode complete --template-file .\ps\bicep\sql-vms-ag.bicep --parameters .\ps\bicep\sql-vms-ag.parameters.json --parameters adminPassword=
+/* BASH
+az login
+az account show
+rgName=vm-test
+location=swedencentral
+az group create -g $rgName -l $location
+
+pwd=$(az keyvault secret show -n 'vmhero' \
+  --subscription $(az account show --query 'id' -o tsv) \
+  --vault-name devboxes-vm-encrypt \
+  --query "value" \
+  -o tsv)
+
+myPublicIp=$(curl ifconfig.me)
+
+az deployment group create \
+  -g $rgName \
+  --mode complete \
+  --template-file ./ps/bicep/vm-standalone.bicep \
+  --parameters ./ps/bicep/vm-standalone.parameters.json \
+  --parameters nsgSourceIp=$myPublicIp adminPassword=$pwd
+
+*/
