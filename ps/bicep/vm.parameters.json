@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "location": { "value": "sweden central" },
-      "subnetName" : { "value": "sql1" },
+      "subnetName" : { "value": "vm1" },
       "dataDisks": {
         "value": [
           {
