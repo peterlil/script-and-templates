@@ -54,8 +54,14 @@ az vm image list-publishers -l westeurope --query "[?starts_with(name, 'Microsof
 az vm image list --all -l swedencentral --publisher MicrosoftSQLServer -o table
 az vm image list --all -l swedencentral --publisher MicrosoftSQLServer --query "[?sku == 'sqldev' && offer=='sql2019-ws2022'].[offer,sku,version,urn]" -o table
 
+# List Windows 11 images
+az vm image list --all --location swedencentral --publisher MicrosoftWindowsDesktop --query "[].[offer,sku,version,urn]" -o table
+az vm image list --all --location swedencentral --publisher MicrosoftWindowsDesktop --query "[?starts_with(sku, 'win11')].[offer,sku,version,urn]" -o table
+az vm image list --all --location swedencentral --publisher MicrosoftWindowsDesktop --query "[?starts_with(sku, 'win11') && ends_with(sku, 'ent')].[offer,sku,version,urn]" -o table
+
 # List all VM images
 az vm image list --all
+
 # List all VM images from a publisher
 az vm image list --all --location westeurope --publisher MicrosoftWindowsDesktop --query "[].[offer,sku,version,urn]" -o table
 az vm image list --all --location westeurope --publisher MicrosoftWindowsDesktop --query "[?starts_with(sku, '21')].[offer,sku,version,urn]" -o table
