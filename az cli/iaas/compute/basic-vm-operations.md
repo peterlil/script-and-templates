@@ -1,3 +1,23 @@
+# Basic VM Operations
+
+Check if one VM is running
+```bash
+vmName=<vmname>
+az vm list -d --query "[?powerState=='VM running' && name=='${vmName}'].{name:name,powerState:powerState}" -o table
+```
+
+Get the powerstate of all VMs in the subscription
+```bash
+az vm list -d --query "[*].{name:name,powerState:powerState}" -o table
+```
+
+Get all the running VMS in the subscription
+```bash
+az vm list -d --query "[?powerState=='VM running'].{name:name,powerState:powerState}" -o table
+```
+
+
+```powershell
 # List the names of all VMs in a subscription
 az vm list --query "[].name | {Names: join(', ', @)}"
 az vm list --query "[*].[name,resourceGroup]"
@@ -95,3 +115,4 @@ function Get-VmFqdn {
 ################################################################################
 # start rd session
 mstsc.exe /v: $fqdn
+```
