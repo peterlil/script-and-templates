@@ -72,3 +72,9 @@ git branch -d <local-branch>
 git rm --cached <path-to-file>
 git commit -m "Remove file <file> from git."
 ```
+
+## Sync remote main with local feature branch
+
+```shell
+git pull origin main
+```
