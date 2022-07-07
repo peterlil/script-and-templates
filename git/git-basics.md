@@ -24,6 +24,12 @@ List current settings
 git config -l
 ```
 
+## Revert `git add`
+
+```bash
+git restore --staged
+```
+
 ## Undo last commit
 
 To undo the last commit, and preserve the files in the current repo so you don't loose the changes, run the following command.
