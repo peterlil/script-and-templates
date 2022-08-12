@@ -4,9 +4,9 @@
 
 Prio | File | Description
 -----|------|------------
-1 | `[path]/etc/gitconfig` | System wide
+3 | `[path]/etc/gitconfig` | System wide
 2 | ` ~/.gitconfig` or `~/.config/git/config` | Specific to each user.
-3 | The Git directory (`.git/config`) | Specific to each repo.
+1 | The Git directory (`.git/config`) | Specific to each repo.
 
 [Reference](https://www.git-scm.com/book/en/v2/Customizing-Git-Git-Configuration)
 
