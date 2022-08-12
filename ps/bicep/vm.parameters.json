@@ -35,6 +35,14 @@
             "name": "tlog02"
           }
         ]
+      },
+      "adminPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/05c25b78-003c-49ef-8f02-b24ca4aca086/resourceGroups/devboxes/providers/Microsoft.KeyVault/vaults/devboxes-vm-encrypt"
+          },
+          "secretName": "vmhero"
+        }
       }
     }
   }
