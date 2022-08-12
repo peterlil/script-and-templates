@@ -14,3 +14,10 @@ List only specific subscriptions by name \
 
 List only the current subscription \
 `az account list --query "[?isDefault]"`
+
+## Get current subscription name/id
+
+```shell
+az account show --query "name" -o tsv
+az account show --query "id" -o tsv
+```

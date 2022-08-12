@@ -1,5 +1,15 @@
 # Git/GitHub basics
 
+## Git configuration order
+
+Prio | File | Description
+-----|------|------------
+1 | `[path]/etc/gitconfig` | System wide
+2 | ` ~/.gitconfig` or `~/.config/git/config` | Specific to each user.
+3 | The Git directory (`.git/config`) | Specific to each repo.
+
+[Reference](https://www.git-scm.com/book/en/v2/Customizing-Git-Git-Configuration)
+
 ## Set the git username and email
 
 The git username and email is information that are bundled with the commits you make. So don't add your "real" e-mail.
@@ -22,6 +32,12 @@ List current settings
 
 ```powershell
 git config -l
+```
+
+## Revert `git add`
+
+```bash
+git restore --staged
 ```
 
 ## Undo last commit
@@ -71,4 +87,10 @@ git branch -d <local-branch>
 ```powershell
 git rm --cached <path-to-file>
 git commit -m "Remove file <file> from git."
+```
+
+## Sync remote main with local feature branch
+
+```shell
+git pull origin main
 ```
