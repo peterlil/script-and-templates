@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": { "value": "sweden central" },
+      "vmName": { "value": "swevm11"},
+      "vmSize": { "value": "Standard_F16s_v2"},
+      "adminUsername": { "value": "peter"},
+      "vnetName": { "value": "devboxes-swec-vnet"},
+      "subnetName" : { "value": "default" },
+      "createVmInterfaceNsg" : { "value": false },
+      "dataDisks": {
+        "value": [
+          {
+            "deleteOption": "Delete",
+            "caching": "ReadOnly",
+            "diskSizeInGB": 512,
+            "storageAccountType": "Premium_LRS",
+            "name": "data01"
+          }
+        ]
+      },
+      "adminPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/05c25b78-003c-49ef-8f02-b24ca4aca086/resourceGroups/devboxes/providers/Microsoft.KeyVault/vaults/devboxes-vm-encrypt"
+          },
+          "secretName": "swevm11"
+        }
+      }
+    }
+  }
