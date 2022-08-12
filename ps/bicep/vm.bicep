@@ -12,8 +12,17 @@ param subnetName string = 'default'
 param vnetName string = 'vnet-${replace(location, ' ', '-')}'
 param ipAllocationMethod string = 'dynamic'
 param nsgSourceIp string
+// Avoid to create an nsg on the VM's NIC if you want jit to work on the subnet nsg.
+param createVmInterfaceNsg bool = true
 
 param dataDisks array
+
+param imageReference object = {
+  offer:'windows-11'
+  sku:'win11-21h2-ent'
+  publisher:'MicrosoftWindowsDesktop'
+  version:'22000.856.220805'
+}
 
 resource subnetRef 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' existing = {
   name: '${vnetName}/${subnetName}'  
@@ -34,13 +43,13 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   }
 }
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = if (createVmInterfaceNsg) {
   name: '${vmName}-rdp-nsg'
   location: location
   properties: {}
 }
 
-resource nsgRule 'Microsoft.Network/networkSecurityGroups/securityRules@2021-08-01' = {
+resource nsgRule 'Microsoft.Network/networkSecurityGroups/securityRules@2021-08-01' = if (createVmInterfaceNsg) {
   name: '${vmNic.name}-rdp-nsg-rule'
   parent: nsg
   properties: {
@@ -78,9 +87,7 @@ resource vmNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
         }
       }
     ]
-    networkSecurityGroup:{
-      id: resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', nsg.name)
-    }
+    networkSecurityGroup: createVmInterfaceNsg ? { id: resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', nsg.name) } : null
   }
 }
 
@@ -116,12 +123,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         name: '${vmName}-os-disk'
         createOption:'FromImage'
       }
-      imageReference:{
-        offer:'sql2019-ws2022'
-        sku:'sqldev'
-        publisher:'MicrosoftSQLServer'
-        version:'15.0.220412'
-      }
+      imageReference:imageReference
       dataDisks: [for (disk,i) in dataDisks: {
         createOption:'Empty'
         lun: i
@@ -140,7 +142,29 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
 
 // [System.TimeZoneInfo]::GetSystemTimeZones() | Select-Object -ExpandProperty Id
 
+// Script block to use when template gets password from key vault
 /*
+
+az login
+az account show
+$rgName='vm-test'
+$location='swedencentral'
+az group create -g $rgName -l $location
+
+$myPublicIp=$(curl ifconfig.me)
+
+az deployment group create `
+  -g $rgName `
+  --mode complete `
+  --template-file .\ps\bicep\vm.bicep `
+  --parameters .\ps\bicep\vm.parameters.json `
+  --parameters nsgSourceIp=$myPublicIp
+
+*/
+
+// Script block to use when suppling password
+/*
+
 az login
 az account show
 $rgName='vm-test'
