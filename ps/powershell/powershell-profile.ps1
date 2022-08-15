@@ -330,5 +330,5 @@ if ($host.Name -eq 'ConsoleHost')
 }
 
 Import-Module posh-git
-Import-Module oh-my-posh
-Set-PoshPrompt -Theme Fish
+oh-my-posh.exe init pwsh --config https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/fish.omp.json | Invoke-Expression
+
