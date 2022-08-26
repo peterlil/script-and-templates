@@ -31,7 +31,13 @@ git config user.email "<email@example.com>"
 List current settings
 
 ```powershell
+# all settings
 git config -l
+
+# setting per scope
+git config -l --local
+git config -l --global
+git config -l --system
 ```
 
 ## Revert `git add`
