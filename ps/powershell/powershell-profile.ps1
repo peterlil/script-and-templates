@@ -332,3 +332,5 @@ if ($host.Name -eq 'ConsoleHost')
 Import-Module posh-git
 oh-my-posh.exe init pwsh --config https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/fish.omp.json | Invoke-Expression
 
+# ALIASES
+Set-Alias -Name k -value "c:\l\home\.azure-kubectl\kubectl.exe"
