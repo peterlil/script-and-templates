@@ -100,3 +100,17 @@ git commit -m "Remove file <file> from git."
 ```shell
 git pull origin main
 ```
+
+# Troubleshooting
+
+## git problems with vscode
+
+### Fix the _the folder currently open doesn't have a git repository_ problem
+
+Issue explaning the problem and solution [here](https://github.com/microsoft/vscode/issues/147358).
+
+Run this command to fix it. 
+
+```PowerShell
+git config --global safe.directory *
+```
