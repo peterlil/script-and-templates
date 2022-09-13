@@ -98,7 +98,10 @@ git commit -m "Remove file <file> from git."
 ## Sync remote main with local feature branch
 
 ```shell
+# Get the changes into the local branch
 git pull origin main
+# Push the branch changes to the github rep
+git push
 ```
 
 # Troubleshooting
