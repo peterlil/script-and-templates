@@ -104,6 +104,36 @@ git pull origin main
 git push
 ```
 
+## Remove Git Ignore Files from Git Repository
+
+### Remove a few files
+
+```shell
+git rm --cached file1 file2 dir/file3
+```
+
+### Remove Many Files (Linux)
+
+Using one rm command
+
+```shell
+git rm --cached `git ls-files -i -c --exclude-from=.gitignore`
+```
+
+Using many rm commands
+
+```shell
+git ls-files -i -c --exclude-from=.gitignore | xargs git rm --cached  
+```
+
+### Remove Many Files (Windows)
+
+```PowerShell
+git ls-files -i -c --exclude-from=.gitignore | %{git rm --cached $_}
+```
+
+
+
 # Troubleshooting
 
 ## git problems with vscode
