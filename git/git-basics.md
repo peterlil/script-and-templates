@@ -104,6 +104,27 @@ git pull origin main
 git push
 ```
 
+## Committed to main when you really wanted to work in a branch?
+
+Make the new branch off main.
+
+```PowerShell
+git branch <new-branch-name> main
+```
+
+Move main back to last valid commit for main.
+
+```PowerShell
+git checkout main
+git reset --hard <last main commit>
+```
+
+Now, [gently force push](https://blog.developer.atlassian.com/force-with-lease/) the reset to remote main branch.
+
+```PowerShell
+git push --force-with-lease
+```
+
 ## Remove Git Ignore Files from Git Repository
 
 ### Remove a few files
