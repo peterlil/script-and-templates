@@ -180,7 +180,7 @@ Function Get-VmPassword {
 
     $value = az keyvault secret show -n $name `
         --subscription $env:DefaultSubscriptionId `
-        --vault-name devboxes-vm-encrypt `
+        --vault-name devboxes-swec `
         --query "value" `
         -o tsv
 
@@ -205,7 +205,7 @@ Function Get-UserPassword {
 
     $value = az keyvault secret show -n $name `
         --subscription $env:DefaultSubscriptionId `
-        --vault-name devboxes-vm-encrypt `
+        --vault-name devboxes-swec `
         --query "value" `
         -o tsv
 
