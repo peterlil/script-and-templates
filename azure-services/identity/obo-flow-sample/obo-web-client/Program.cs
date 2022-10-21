@@ -22,11 +22,6 @@ builder.Configuration.AddAzureAppConfiguration(options =>
     options.Connect(appConfigCnStr)
         .ConfigureKeyVault(async kv =>
         {
-            /*
-            var o = new DefaultAzureCredentialOptions();
-            o.SharedTokenCacheUsername = "peterlil@mngenv319828.onmicrosoft.com";
-            kv.SetCredential(new DefaultAzureCredential(o));
-            */
             kv.SetCredential(new DefaultAzureCredential());
         });
 });
