@@ -16,13 +16,16 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var forecast in (List<TemperatureSample>?)(ViewData["WeatherForecast"]))
+                @if (ViewData.Keys.Contains("WeatherForecast"))
                 {
-                    <tr>
-                        <td>@forecast.Date.ToShortDateString()</td>
-                        <td>@forecast.TemperatureC</td>
-                        <td>@forecast.Summary</td>
-                    </tr>
+                    foreach (var forecast in (List<TemperatureSample>?)(ViewData["WeatherForecast"]))
+                    {
+                        <tr>
+                            <td>@forecast.Date.ToShortDateString()</td>
+                            <td>@forecast.TemperatureC</td>
+                            <td>@forecast.Summary</td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>

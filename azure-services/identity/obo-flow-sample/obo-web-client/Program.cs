@@ -15,14 +15,14 @@ string[] scopes = clientApiScopes.Union(serverApiScopes).ToArray();
 */
 string[] scopes = new string[]
 {
-    builder.Configuration.GetValue<string>("obo-api-client-sample:Scopes"),
-    builder.Configuration.GetValue<string>("obo-api-server-sample:Scopes")
+    builder.Configuration.GetValue<string>("obo-api-client-sample:Scopes")/*,
+    builder.Configuration.GetValue<string>("obo-api-server-sample:Scopes")*/
 };
 
 // Add services to the container.
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"), "OpenIdConnect", "Cookies", true)
-        .EnableTokenAcquisitionToCallDownstreamApi(new[] { scopes[1] })
+        .EnableTokenAcquisitionToCallDownstreamApi(scopes)
             .AddInMemoryTokenCaches();
 
 //string appConfigCnStr = builder.Configuration.GetConnectionString("AppConfig");
