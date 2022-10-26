@@ -2,7 +2,34 @@
 
 ## Scenario: Web App (App) -> Middleware Api (Api1) -> Backend Api (Api2)
 
-## Backend Api (Api2)
+
+### Create an appreg for App
+
+```shell
+appRegAppDisplayName=app
+
+appRegApp=$(az ad sp create-for-rbac --display-name $appRegAppDisplayName)
+appIdApp=$(echo $appRegApp | jq -r '.appId')
+appSecretApp=$(echo $appRegApp | jq -r '.password')
+objectIdAppRegApp=$(az ad app show --id $appIdApp --query '{id: id}' -o tsv)
+echo $appRegApp
+```
+
+Make sure to store the content of `appRegApp` somewhere safe.
+
+### Create an appreg for Api1
+
+```shell
+appRegApi1DisplayName=api1
+
+appRegApi1=$(az ad sp create-for-rbac --display-name $appRegApi1DisplayName)
+appIdApi1=$(echo $appRegApi1 | jq -r '.appId')
+appSecretApi1=$(echo $appRegApi1 | jq -r '.password')
+objectIdAppRegApi1=$(az ad app show --id $appIdApi1 --query '{id: id}' -o tsv)
+echo $appRegApi1
+```
+
+Make sure to store the content of `appRegApi1` somewhere safe.
 
 ### Create an appreg for Api2
 
@@ -16,6 +43,9 @@ echo $appRegApi2
 ```
 
 Make sure to store the content of `appRegApi2` somewhere safe.
+
+
+## Configure Backend Api (Api2)
 
 ### Set the sign in audience and Application ID URI for Api2
 
@@ -44,24 +74,11 @@ az rest --method PATCH \
     --uri https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi2 \
     --body "$scopes"
 
+
 ```
 
 
 ## Middleware Api (Api1)
-
-### Create an appreg for Api1
-
-```shell
-appRegApi1DisplayName=api1
-
-appRegApi1=$(az ad sp create-for-rbac --display-name $appRegApi1DisplayName)
-appIdApi1=$(echo $appRegApi1 | jq -r '.appId')
-appSecretApi1=$(echo $appRegApi1 | jq -r '.password')
-objectIdAppRegApi1=$(az ad app show --id $appIdApi1 --query '{id: id}' -o tsv)
-echo $appRegApi1
-```
-
-Make sure to store the content of `appRegApi1` somewhere safe.
 
 ### Set the sign in audience and Application ID URI for Api2
 
@@ -112,23 +129,23 @@ az ad app update --id $objectIdAppRegApi1 \
 
 ```
 
-## Web App (App)
-
-### Create an appreg for App
+### Set the knownClientApplications
 
 ```shell
-appRegAppDisplayName=app
-
-appRegApp=$(az ad sp create-for-rbac --display-name $appRegAppDisplayName)
-appIdApp=$(echo $appRegApp | jq -r '.appId')
-appSecretApp=$(echo $appRegApp | jq -r '.password')
-objectIdAppRegApp=$(az ad app show --id $appIdApp --query '{id: id}' -o tsv)
-echo $appRegApp
+knownClientApps=$( jq -n \
+    --arg appId $appIdApp \
+    '{"api":{"knownClientApplications":[$appId]}}' )
+	
+az rest --method PATCH \
+    --headers 'Content-Type=application/json' \
+    --uri https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi1 \
+    --body "$knownClientApps"
 ```
 
-Make sure to store the content of `appRegApp` somewhere safe.
+## Configure the Web App (App)
 
-### Set the sign in audience and Application ID URI for Api2
+
+### Set the sign in audience and Application ID URI for App
 
 ```shell
 az ad app update --id $appIdApp \
@@ -177,6 +194,7 @@ az ad app update --id $objectIdAppRegApp \
     --required-resource-accesses "$permissions"
 
 ```
+
 
 ## Show configuration information
 
