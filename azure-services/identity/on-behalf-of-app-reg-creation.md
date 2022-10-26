@@ -42,25 +42,9 @@ scopes=$( jq -n \
 az rest --method PATCH \
     --headers 'Content-Type=application/json' \
     --uri https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi2 \
-    --verbose \
     --body "$scopes"
 
 ```
-
-
-
-
-### Add the web platform
-
-```shell
-appWebUris='https://localhost:7286/signin-oidc'
-
-az ad app update --id $objectIdAppRegApp \
-    --web-redirect-uris $appWebUris \
-    --enable-access-token-issuance true \
-    --enable-id-token-issuance true
-```
-
 
 
 ## Middleware Api (Api1)
@@ -104,7 +88,6 @@ scopes=$( jq -n \
 az rest --method PATCH \
     --headers 'Content-Type=application/json' \
     --uri https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi1 \
-    --verbose \
     --body "$scopes"
 
 ```
@@ -151,6 +134,19 @@ Make sure to store the content of `appRegApp` somewhere safe.
 az ad app update --id $appIdApp \
     --sign-in-audience 'AzureADMyOrg'
 ```
+
+### Add the web platform and reply to address
+
+```shell
+# NOTE: Change the web address to address for the web app
+appWebUris='https://localhost:7286/signin-oidc'
+
+az ad app update --id $objectIdAppRegApp \
+    --web-redirect-uris $appWebUris \
+    --enable-access-token-issuance true \
+    --enable-id-token-issuance true
+```
+
 
 ### Set API permissions
 

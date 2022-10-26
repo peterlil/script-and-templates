@@ -43,7 +43,7 @@ public class WeatherForecastController : ControllerBase
     public IEnumerable<WeatherForecast> Get()
     {
         var client = _httpClientFactory.CreateClient();
-        var scope = _configuration["obo-api-server-sample:UseApi"];
+        var scope = _configuration["obo-api-server-sample:Scopes"];
         string accessToken = string.Empty;
 
         try

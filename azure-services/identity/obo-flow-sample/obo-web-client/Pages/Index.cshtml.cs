@@ -34,7 +34,7 @@ public class IndexModel : PageModel
     {
 
         var client = _httpClientFactory.CreateClient();
-        string scope = _configuration["obo-api-client-sample:Scopes"]; ;
+        string scope = _configuration["obo-api-client-sample:Scopes"];
         var accessToken = _tokenAcquisition.GetAccessTokenForUserAsync(new[] { scope }).Result; // Must have client secret to call an api
 
         client.BaseAddress = new Uri(_configuration["obo-api-client-sample:ApiBaseAddress"]);

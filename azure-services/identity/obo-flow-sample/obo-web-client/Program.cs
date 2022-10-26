@@ -25,15 +25,15 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
         .EnableTokenAcquisitionToCallDownstreamApi(new[] { scopes[1] })
             .AddInMemoryTokenCaches();
 
-string appConfigCnStr = builder.Configuration.GetConnectionString("AppConfig");
-builder.Configuration.AddAzureAppConfiguration(options =>
-{
-    options.Connect(appConfigCnStr)
-        .ConfigureKeyVault(async kv =>
-        {
-            kv.SetCredential(new DefaultAzureCredential());
-        });
-});
+//string appConfigCnStr = builder.Configuration.GetConnectionString("AppConfig");
+//builder.Configuration.AddAzureAppConfiguration(options =>
+//{
+//    options.Connect(appConfigCnStr)
+//        .ConfigureKeyVault(async kv =>
+//        {
+//            kv.SetCredential(new DefaultAzureCredential());
+//        });
+//});
 
 
 
