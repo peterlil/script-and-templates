@@ -51,7 +51,7 @@ Change `appsettings.json`to this:
     "TenantId": "<tenant id of <my-own-domain>.onmicrosoft.com<",
     "ClientId": "<client id of the app reg created above>",
 
-    "Scopes": "access_as_user",
+    "Scopes": "UseApi",
     "CallbackPath": "/signin-oidc"
   },
   "Logging": {
@@ -89,9 +89,75 @@ Go to the Azure Portal -> Azure Active Directory -> App registrations -> Authent
 
 
 
+## Configuring with the obo-api-client
+
+### Create an appreg
+
+Use Azure CLI with [`create-for-rbac`](https://learn.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) to cretae an app registration (an Application Object) with an attached Service Principal (Enterprise App).
+
+```PowerShell
+$appRegDisplayName='obo-api-client-sample'
+
+$appReg = az ad sp create-for-rbac --display-name $appRegDisplayName
+```
+
+Make sure to store the content of `appReg` somewhere safe.
+
+### Set the Application ID URI
+
+Go to the Azure Portal -> Azure Active Directory -> App registrations -> Expose an API -> Click on _Set_ next to _Application ID URI_ and then _Save_ to save the suggested value.
+
+### Expose a scope
+
+Go to the Azure Portal -> Azure Active Directory -> App registrations -> Expose an API -> Click on _Add a scope_.
+
+UseApi
+Admins and users
+UseApi
+UseApi
+UseApi
+UseApi
+
+### Copy details to the obo-api-client project
+
+Change `appsettings.json`to this:
+
+```json
+{
+  "AzureAd": {
+    "Instance": "https://login.microsoftonline.com/",
+    "Domain": "<my-own-domain>.onmicrosoft.com",
+    "TenantId": "<tenant id of <my-own-domain>.onmicrosoft.com<",
+    "ClientId": "<client id of the app reg created above>",
+
+    "Scopes": "UseApi",
+    "CallbackPath": "/signin-oidc"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+```
+
+## Configuring with the obo-web-client
+
+Assign the API permission to the appreg.
+Go to the Azure Portal -> Azure Active Directory -> App registrations -> API permissions -> Add a permission (My APIs->obo-api-server-sample).
+
+Change this to the api-client
+"obo-api-client-sample": {
+    "UseApi": "api://470cfe15-a4af-46d4-be98-46fb384719d5/UseApi",
+    "ApiBaseAddress": "https://localhost:7287"
+  },'
 
 
 
+## Configuring with the obo-api-client
+Add the permissions on the server api to the appreg
 
 
 // TODO: Create a new appreg for the client, which only can access the client api and see how that goes.

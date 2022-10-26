@@ -1,4 +1,25 @@
 ################################################################################
+# Switch between well-known Azure subscriptions
+################################################################################
+function SwitchTo-AzureSubscription{
+    param(
+        [Parameter(Mandatory=$true)]
+        [Alias('s')]
+        [string]$SubscriptionName
+    )
+
+    $subscription = Get-AzureSubscription | Where-Object { $_.Name -eq $SubscriptionName }
+    if ($subscription)
+    {
+        Select-AzureSubscription -SubscriptionName $SubscriptionName
+    }
+    else
+    {
+        Write-Warning "Subscription '$SubscriptionName' not found"
+    }
+}
+
+################################################################################
 # Get the FQDN of the
 ################################################################################
 function Get-VmFqdn {

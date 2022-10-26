@@ -34,10 +34,10 @@ public class IndexModel : PageModel
     {
 
         var client = _httpClientFactory.CreateClient();
-        var scope = _configuration["obo-api-server-sample:UseApi"];
+        string scope = _configuration["obo-api-client-sample:Scopes"]; ;
         var accessToken = _tokenAcquisition.GetAccessTokenForUserAsync(new[] { scope }).Result; // Must have client secret to call an api
 
-        client.BaseAddress = new Uri(_configuration["obo-api-server-sample:ApiBaseAddress"]);
+        client.BaseAddress = new Uri(_configuration["obo-api-client-sample:ApiBaseAddress"]);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 

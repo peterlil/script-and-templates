@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "obo-api-server", "obo-api-s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "obo-web-client", "obo-web-client\obo-web-client.csproj", "{D727D288-EE60-4A92-83CE-4666D1D29730}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "obo-api-client", "obo-api-client\obo-api-client.csproj", "{14BF3176-CE50-4A15-9A72-25B22AF77818}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{D727D288-EE60-4A92-83CE-4666D1D29730}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D727D288-EE60-4A92-83CE-4666D1D29730}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D727D288-EE60-4A92-83CE-4666D1D29730}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14BF3176-CE50-4A15-9A72-25B22AF77818}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14BF3176-CE50-4A15-9A72-25B22AF77818}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14BF3176-CE50-4A15-9A72-25B22AF77818}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14BF3176-CE50-4A15-9A72-25B22AF77818}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -6,89 +6,6 @@
 
 ### Create an appreg for Api2
 
-Use PowerShell 7.x for this.
-
-```PowerShell
-$appRegApi2DisplayName='api2'
-
-$appRegApi2 = az ad sp create-for-rbac --display-name $appRegApi2DisplayName
-$appIdApi2 = ($appRegApi2 | ConvertFrom-Json).appId
-$objectIdAppRegApi2 = (az ad app show --id $appIdApi2 --query '{id: id}' -o tsv)
-$appRegApi2
-```
-
-Make sure to store the content of `appRegApi2` somewhere safe.
-
-### Set the sign in audience and Application ID URI for Api2
-
-Use PowerShell 7.x for this.
-
-```PowerShell
-az ad app update --id $appIdApi2 `
-    --sign-in-audience 'AzureADMyOrg' `
-    --identifier-uris "api://$($appIdApi2)"
-```
-
-### Expose scopes
-
-```PowerShell
-$scopes = ('{
-   "api": {
-        "oauth2PermissionScopes": [
-            {
-                "adminConsentDescription": "Allow access to the dummy api", 
-                "adminConsentDisplayName": "Dummy Api Access", 
-                "id": "##id##", 
-                "isEnabled": true, 
-                "type": "User", 
-                "userConsentDescription": "Allow access to the dummy api", 
-                "userConsentDisplayName": "Dummy Api Access", 
-                "value": "UseApi" 
-            }
-        ]
-    }
-}') -replace "##id##", (New-Guid) 
-
-# | ConvertTo-Json -d 5 | ConvertFrom-Json | ConvertTo-Json -d 5
-
-#| ConvertFrom-Json
-#
-#$oauth2Permissions = $scopes | ConvertFrom-Json
-#$oauth2Permissions = ConvertTo-Json @($oauth2Permissions) -d 5
-
-# This should be the way to do it, but az cli lags behind
-#$oldPath = pwd
-#cd $env:TEMP
-#$oauth2Permissions | Out-File -FilePath .\oauth2Permissions.json
-#az ad app update --id $appIdApi2 --set api.oauth2PermissionScopes=@oauth2Permissions.json
-#cd $oldPath
-
-# use this instead
-$oldPath = pwd
-cd $env:TEMP
-$scopes | Out-File -FilePath .\oauth2Permissions.json 
-az rest --method PATCH `
-    --headers "Content-Type=application/json" `
-    --uri "https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi2" `
-    --verbose `
-    --body @$oauth2Permissions.json
-
-az rest --method PATCH `
-    --headers "Content-Type=application/json" `
-    --uri "https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi2" `
-    --verbose `
-    --body $scopes
-
-```
-
-
-
-
-
-## Backend Api (Api2) (bash)
-
-### Create an appreg for Api2
-
 ```shell
 appRegApi2DisplayName=api2
 
@@ -146,7 +63,7 @@ az ad app update --id $objectIdAppRegApp \
 
 
 
-## Middleware Api (Api1) (bash)
+## Middleware Api (Api1)
 
 ### Create an appreg for Api1
 
@@ -210,11 +127,9 @@ permissions=$(jq -n \
 az ad app update --id $objectIdAppRegApi1 \
     --required-resource-accesses "$permissions"
 
+```
 
-
-
-
-## Web App (App) (bash)
+## Web App (App)
 
 ### Create an appreg for App
 
@@ -223,6 +138,7 @@ appRegAppDisplayName=app
 
 appRegApp=$(az ad sp create-for-rbac --display-name $appRegAppDisplayName)
 appIdApp=$(echo $appRegApp | jq -r '.appId')
+appSecretApp=$(echo $appRegApp | jq -r '.password')
 objectIdAppRegApp=$(az ad app show --id $appIdApp --query '{id: id}' -o tsv)
 echo $appRegApp
 ```
@@ -258,7 +174,7 @@ az ad app update --id $objectIdAppRegApp \
 
 ```
 
-## Show required information
+## Show configuration information
 
 ```shell
 instance=https://login.microsoftonline.com/
@@ -266,6 +182,7 @@ domain=$(az rest --method get --url https://graph.microsoft.com/v1.0/domains --q
 tenantId=$(az account show --query tenantId -o tsv)
 echo ''
 echo '=====Backend Api (Api2) appsettings.json====='
+echo ''
 echo '  "AzureAd": {'
 echo '    "Instance": "'$instance'",'
 echo '    "Domain": "'$domain'",'
@@ -276,6 +193,7 @@ echo '    "CallbackPath": "/signin-oidc"'
 echo '  }'
 echo ''
 echo '=====Middleware Api (Api1) appsettings.json====='
+echo ''
 echo '  "AzureAd": {'
 echo '    "Instance": "'$instance'",'
 echo '    "Domain": "'$domain'",'
@@ -286,12 +204,30 @@ echo '    "Scopes": "'$scopeNameApi1'",'
 echo '    "CallbackPath": "/signin-oidc"'
 echo '  },'
 echo '  "<api2>": { // Replace <api2> with the name of the backend api used in code'
-echo '    "'$scopeNameApi2'": "api://5ed606fb-0b95-429d-8a9b-f86408cd5ebf/UseApi",
-    "ApiBaseAddress": "https://localhost:7090"
-  }
+echo '    "'$scopeNameApi2'": "api://'$appIdApi2'/'$scopeNameApi2'",'
+echo '    "ApiBaseAddress": "https://localhost:7090", // Replace with the base address of the backend api'
+echo '  }'
 echo ''
-echo '=====Web App (App) Configuration====="
-echo 'AppId: $appIdApp"
-echo 'AppSecret: $appSecretApp"
+echo '=====Web App (App) appsettings.json====='
+echo ''
+echo '  "AzureAd": {'
+echo '    "Instance": "'$instance'",'
+echo '    "Domain": "'$domain'",'
+echo '    "TenantId": "'$tenantId'",'
+echo '    "ClientId": "'$appIdApp'",'
+echo '    "ClientSecret": "'$appSecretApp'",'
+echo '    "CallbackPath": "/signin-oidc",'
+echo '    "SignedOutCallbackPath": "/signout-oidc"'
+echo '  },'
+echo '  "<api1>": { // Replace <api1> with the name of the middleware api used in code'
+echo '    "'$scopeNameApi1'": "api://'$appIdApi1'/'$scopeNameApi1'",'
+echo '    "ApiBaseAddress": "https://localhost:7287", // Replace with the base address of the backend api'
+echo '  },'
+echo '  "<api2>": { // Replace <api1> with the name of the middleware api used in code'
+echo '    "'$scopeNameApi1'": "api://'$appIdApi2'/'$scopeNameApi2'",'
+echo '    "ApiBaseAddress": "https://localhost:7287", // Replace with the base address of the backend api'
+echo '  }'
+echo ''
+
 
 ```

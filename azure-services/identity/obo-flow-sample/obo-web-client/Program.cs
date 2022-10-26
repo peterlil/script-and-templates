@@ -8,12 +8,21 @@ using Microsoft.Identity.Web.UI;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string[] scopes = builder.Configuration.GetValue<string>("obo-api-server-sample:UseApi").Split(' '); // ?
+/*
+string[] clientApiScopes = builder.Configuration.GetValue<string>("obo-api-client-sample:Scopes").Split(' ');
+string[] serverApiScopes = builder.Configuration.GetValue<string>("obo-api-server-sample:Scopes").Split(' ');
+string[] scopes = clientApiScopes.Union(serverApiScopes).ToArray();
+*/
+string[] scopes = new string[]
+{
+    builder.Configuration.GetValue<string>("obo-api-client-sample:Scopes"),
+    builder.Configuration.GetValue<string>("obo-api-server-sample:Scopes")
+};
 
 // Add services to the container.
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"), "OpenIdConnect", "Cookies", true)
-        .EnableTokenAcquisitionToCallDownstreamApi(scopes)
+        .EnableTokenAcquisitionToCallDownstreamApi(new[] { scopes[1] })
             .AddInMemoryTokenCaches();
 
 string appConfigCnStr = builder.Configuration.GetConnectionString("AppConfig");
@@ -26,18 +35,7 @@ builder.Configuration.AddAzureAppConfiguration(options =>
         });
 });
 
-/*
-https://stackoverflow.com/questions/61524182/msal-net-no-account-or-login-hint-was-passed-to-the-acquiretokensilent-call
-https://stackoverflow.com/questions/62518766/error-no-account-or-login-hint-was-passed-to-the-acquiretokensilent-call
-https://stackoverflow.com/questions/60524263/account-not-found-after-restart-no-account-or-login-hint-was-passed-to-the-acqu
-https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-net-token-cache-serialization?tabs=aspnetcore
-https://learn.microsoft.com/en-us/azure/azure-app-configuration/quickstart-aspnet-core-app?tabs=core6x
-https://www.youtube.com/watch?v=TU82BTmeNeU
-https://localhost:7286/
-https://learn.microsoft.com/en-us/answers/questions/714417/unable-to-retrieve-password-from-keyvault-error-ak.html
-https://github.com/Azure/azure-cli/issues/11871
-https://www.rahulpnath.com/blog/defaultazurecredential-from-azure-sdk/
-*/
+
 
 builder.Services.AddAuthorization(options =>
 {
