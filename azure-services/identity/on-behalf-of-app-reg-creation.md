@@ -159,15 +159,23 @@ az ad app update --id $appIdApp \
 appsWithScopes=$(az rest --method GET \
     --uri https://graph.microsoft.com/v1.0/myorganization/me/ownedObjects/$/Microsoft.Graph.Application)
 
+# This adds the scopes for both Api1 and Api2, while only 2 should be required. 
+# appScope=$(echo $appsWithScopes | jp "value[?(api.oauth2PermissionScopes[0].value=='$scopeNameApi1' && (appId=='$appIdApi1' || appId=='$appIdApi2'))].{appId:appId,scopeId:api.oauth2PermissionScopes[0].id,value:api.oauth2PermissionScopes[0].value}")
 
-appScope=$(echo $appsWithScopes | jp "value[?(api.oauth2PermissionScopes[0].value=='$scopeNameApi1' && (appId=='$appIdApi1' || appId=='$appIdApi2'))].{appId:appId,scopeId:api.oauth2PermissionScopes[0].id,value:api.oauth2PermissionScopes[0].value}")
+#permissions=$(jq -n \
+#    --arg appId1 $(echo $appScope | jq -r .[0].appId) \
+#    --arg scopeId1 $(echo $appScope | jq -r .[0].scopeId) \
+#    --arg appId2 $(echo $appScope | jq -r .[1].appId) \
+#    --arg scopeId2 $(echo $appScope | jq -r .[1].scopeId) \
+#    '[{"resourceAppId":$appId1,"resourceAccess":[{"id":$scopeId1,"type":"Scope"}]},{"resourceAppId":$appId2,"resourceAccess":[{"id":$scopeId2,"type":"Scope"}]}]')
+
+appScope=$(echo $appsWithScopes | jp "value[?(api.oauth2PermissionScopes[0].value=='$scopeNameApi1' && appId=='$appIdApi1')].{appId:appId,scopeId:api.oauth2PermissionScopes[0].id,value:api.oauth2PermissionScopes[0].value}")
 
 permissions=$(jq -n \
     --arg appId1 $(echo $appScope | jq -r .[0].appId) \
     --arg scopeId1 $(echo $appScope | jq -r .[0].scopeId) \
-    --arg appId2 $(echo $appScope | jq -r .[1].appId) \
-    --arg scopeId2 $(echo $appScope | jq -r .[1].scopeId) \
-    '[{"resourceAppId":$appId1,"resourceAccess":[{"id":$scopeId1,"type":"Scope"}]},{"resourceAppId":$appId2,"resourceAccess":[{"id":$scopeId2,"type":"Scope"}]}]')
+    '[{"resourceAppId":$appId1,"resourceAccess":[{"id":$scopeId1,"type":"Scope"}]}]')
+
 
 az ad app update --id $objectIdAppRegApp \
     --required-resource-accesses "$permissions"
@@ -204,8 +212,8 @@ echo '    "Scopes": "'$scopeNameApi1'",'
 echo '    "CallbackPath": "/signin-oidc"'
 echo '  },'
 echo '  "<api2>": { // Replace <api2> with the name of the backend api used in code'
-echo '    "'$scopeNameApi2'": "api://'$appIdApi2'/'$scopeNameApi2'",'
-echo '    "ApiBaseAddress": "https://localhost:7090", // Replace with the base address of the backend api'
+echo '    "Scopes": "api://'$appIdApi2'/'$scopeNameApi2'",'
+echo '    "ApiBaseAddress": "https://localhost:7090" // Replace with the base address of the backend api'
 echo '  }'
 echo ''
 echo '=====Web App (App) appsettings.json====='
@@ -220,12 +228,12 @@ echo '    "CallbackPath": "/signin-oidc",'
 echo '    "SignedOutCallbackPath": "/signout-oidc"'
 echo '  },'
 echo '  "<api1>": { // Replace <api1> with the name of the middleware api used in code'
-echo '    "'$scopeNameApi1'": "api://'$appIdApi1'/'$scopeNameApi1'",'
-echo '    "ApiBaseAddress": "https://localhost:7287", // Replace with the base address of the backend api'
+echo '    "Scopes": "api://'$appIdApi1'/'$scopeNameApi1'",'
+echo '    "ApiBaseAddress": "https://localhost:7287" // Replace with the base address of the backend api'
 echo '  },'
 echo '  "<api2>": { // Replace <api1> with the name of the middleware api used in code'
-echo '    "'$scopeNameApi1'": "api://'$appIdApi2'/'$scopeNameApi2'",'
-echo '    "ApiBaseAddress": "https://localhost:7287", // Replace with the base address of the backend api'
+echo '    "Scopes": "api://'$appIdApi2'/'$scopeNameApi2'",'
+echo '    "ApiBaseAddress": "https://localhost:7287" // Replace with the base address of the backend api'
 echo '  }'
 echo ''
 
