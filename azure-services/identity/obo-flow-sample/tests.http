@@ -1,0 +1,2 @@
+# Test of obo-api-server locally
+GET https://localhost:7090/WeatherForecast
