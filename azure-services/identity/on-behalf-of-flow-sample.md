@@ -733,6 +733,6 @@ namespace ConsoleApp1
 Run and test the console app.
 
 ## References
-[Protected web API: Code configuration](https://learn.microsoft.com/en-us/azure/active-directory/develop/scenario-protected-web-api-app-configuration)
+[Protected web API: Code configuration](https://learn.microsoft.com/en-us/azure/active-directory/develop/scenario-protected-web-api-app-configuration) \
 [How to implement Interactive Authentication using MSAL dotNET](https://techdirectarchive.com/2022/06/06/how-to-implement-interactive-authentication-by-using-msal-net/comment-page-1/)
 
