@@ -6,6 +6,7 @@ This walk-through is based on ASP.NET for .NET 6.0, and consist of one web app a
 
 Generate the code for the three projects. The project generation code can be executed in PowerShell or Bash, but .NET 6.0 needs to be installed in the environment is run.
 
+_(PowerShell)_
 ```dotnetcli
 # web app
 dotnet new webapp --auth SingleOrg -o obo-web-client
@@ -15,12 +16,11 @@ dotnet new webapi --auth SingleOrg -o obo-api-client
 dotnet new webapi --auth SingleOrg -o obo-api-server
 ```
 
-_From now on all scripting code is in bash._
-
 Get the application url for the web app to be used in callback configurations.
 
 Open a bash shell and navigate to the directory where the `dotnet new...` commands were executed.
 
+_(bash)_
 ```bash
 # get the application url for the web app
 IFS=';' read -ra URL <<< "$(cat obo-web-client/Properties/launchSettings.json | jq -r ".profiles.obo_web_client.applicationUrl")"
@@ -374,8 +374,8 @@ Done with the code changes, no need to change anything in api2 (obo-api-server p
 
 ## Creating the Azure AD app registrations
 
+_(bash)_
 ```shell
-
 # Create the app regs for the app and apis. 
 appRegAppDisplayName=app
 appRegApi1DisplayName=api1
@@ -548,6 +548,7 @@ echo ''
 
 ## Create the app roles
 
+_(bash)_
 ```bash
 # create user-role for the app users for each appreg (necessary to get the roles claim in the token)
 displayNames=('app' 'api1' 'api2')
@@ -579,6 +580,7 @@ az ad sp update --id $appId --set appRoleAssignmentRequired=true
 
 ## Create the Azure AD group and add a user to the group
 
+_(bash)_
 ```bash
 # Create the Azure AD group
 az ad group create --display-name 'app-users' \
@@ -592,6 +594,7 @@ az ad group member add --group 'app-users' \
 
 ## Assign roles to groups
 
+_(bash)_
 ```shell
 groupName=app-users
 roleName=app-user
@@ -633,6 +636,7 @@ cd ..
 ```
 
 Add an `appsettings.json` file to the console app project. Add the output from the script below to the `appsettings.json` file.
+
 _(bash)_
 ```bash
 echo ''
