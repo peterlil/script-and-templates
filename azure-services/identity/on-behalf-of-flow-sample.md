@@ -610,8 +610,6 @@ done
 ## Done
 You may now test the apps.
 
-Users not in roles still has access :-(
-
 ## References
 [Protected web API: Code configuration](https://learn.microsoft.com/en-us/azure/active-directory/develop/scenario-protected-web-api-app-configuration)
 
