@@ -573,8 +573,7 @@ for appName in ${displayNames[@]}; do
 done
 
 # make sure app role assignements are mandatory on the web app
-appId=$(az ad app list --query "[?displayName=='$appRegAppDisplayName'].appId" -o tsv)
-az ad sp update --id $appId --set appRoleAssignmentRequired=true
+az ad sp update --id $appIdApp --set appRoleAssignmentRequired=true
 
 ```
 
@@ -614,6 +613,69 @@ done
 You may now test the apps.
 
 ## Now let's make a console app the client instead of the web app
+
+Add an app registration for a native app .
+
+_(bash)_
+```bash
+appRegNativeAppDisplayName=NativeApp
+
+echo "Creating app registration $appRegNativeAppDisplayName"
+appRegNativeApp=$(az ad sp create-for-rbac --display-name $appRegNativeAppDisplayName)
+appIdNativeApp=$(echo $appRegNativeApp | jq -r '.appId')
+objectIdAppRegNativeApp=$(az ad app show --id $appIdNativeApp --query '{id: id}' -o tsv)
+
+# Set the known client applications on Api1
+knownClientApps=$( jq -n \
+    --arg appId $appIdApp \
+    --arg appIdNative $appIdNativeApp \
+    '{"api":{"knownClientApplications":[$appId,$appIdNative]}}' )
+
+az rest --method PATCH \
+    --headers 'Content-Type=application/json' \
+    --uri https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi1 \
+    --body "$knownClientApps"
+
+echo "Configuring app registration $appRegNativeAppDisplayName"
+# Set the sign in audience and Application ID URI for App
+az ad app update --id $appIdNativeApp \
+    --sign-in-audience 'AzureADMyOrg'
+
+# Add the native app platform and reply to address
+az ad app update --id $objectIdAppRegNativeApp \
+    --is-fallback-public-client \
+    --public-client-redirect-uris "http://localhost"
+
+# Set API permissions
+# Get the scopes for Api1 & Api2
+appsWithScopes=$(az rest --method GET \
+    --uri https://graph.microsoft.com/v1.0/myorganization/me/ownedObjects/$/Microsoft.Graph.Application)
+
+appScope=$(echo $appsWithScopes | jp "value[?(api.oauth2PermissionScopes[0].value=='$scopeNameApi1' && appId=='$appIdApi1')].{appId:appId,scopeId:api.oauth2PermissionScopes[0].id,value:api.oauth2PermissionScopes[0].value}")
+
+permissions=$(jq -n \
+    --arg appId1 $(echo $appScope | jq -r .[0].appId) \
+    --arg scopeId1 $(echo $appScope | jq -r .[0].scopeId) \
+    '[{"resourceAppId":$appId1,"resourceAccess":[{"id":$scopeId1,"type":"Scope"}]}]')
+
+az ad app update --id $objectIdAppRegNativeApp \
+    --required-resource-accesses "$permissions"
+
+# Create the app role on the app registration
+echo "Creating role for $appRegNativeAppDisplayName"
+az ad app update --id $objectIdAppRegNativeApp --app-roles "$role"
+
+# make sure app role assignements are mandatory on the console app
+az ad sp update --id $appIdNativeApp --set appRoleAssignmentRequired=true
+
+# assign the app-user role to the app-users group
+goId=$(az ad group show --group "$groupName" --query "id" --output tsv)
+roId=$(az ad app show --id $appIdNativeApp --query "appRoles[?value=='$roleName'].id" -o tsv)
+spId=$(az ad sp list --all --query "[?appId=='$appIdNativeApp'].id" -o tsv)
+az rest -m POST -u https://graph.microsoft.com/v1.0/groups/$goid/appRoleAssignments -b "{\"principalId\": \"$goId\", \"resourceId\": \"$spId\",\"appRoleId\": \"$roId\"}"
+
+```
+
 
 Generate the code for the console app. 
 
@@ -733,6 +795,8 @@ namespace ConsoleApp1
     }
 }
 ```
+
+
 
 Run and test the console app.
 
