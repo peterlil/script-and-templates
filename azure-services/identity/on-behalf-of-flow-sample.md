@@ -16,8 +16,6 @@ dotnet new webapi --auth SingleOrg -o obo-api-client
 dotnet new webapi --auth SingleOrg -o obo-api-server
 ```
 
-Get the application url for the web app to be used in callback configurations.
-
 Open a bash shell and navigate to the directory where the `dotnet new...` commands were executed.
 
 _(bash)_
