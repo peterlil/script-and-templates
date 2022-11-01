@@ -2,7 +2,7 @@
 
 ## Generate the code for the apis
 
-This walk-through is based on ASP.NET for .NET 6.0, and consist of one web app, and two apis, api1 and api2. The web app calls api1, and api1 calls api2. The web app is configured to use the on-behalf-of flow.
+This walk-through is based on ASP.NET for .NET 6.0, and consist of one web app and two apis, api1 and api2. The web app calls api1, and api1 calls api2. The web app is configured to use the on-behalf-of flow.
 
 Generate the code for the three projects. The project generation code can be executed in PowerShell or Bash, but .NET 6.0 needs to be installed in the environment is run.
 
@@ -540,7 +540,7 @@ echo '    "SignedOutCallbackPath": "/signout-oidc"'
 echo '  },'
 echo '  "obo-api-client-sample": { '
 echo '    "Scopes": "api://'$appIdApi1'/.default",'
-echo '    "ApiBaseAddress": "'$api1ApplicationUrl'" // Replace with the base address of the backend api'
+echo '    "ApiBaseAddress": "'$api1ApplicationUrl'"'
 echo '  }'
 echo ''
 
@@ -607,9 +607,132 @@ for appName in ${displayNames[@]}; do
 done
 ```
 
-## Done
+## Done with web client
 You may now test the apps.
+
+## Now let's make a console app the client instead of the web app
+
+Generate the code for the console app. 
+
+_(PowerShell)_
+```dotnetcli
+# console app (native app)
+dotnet new console -o obo-console-client
+```
+
+Add the `Microsoft.Identity.Client` nuget package to the console app.
+Execute this in the same folder as the console app project file.
+
+_(PowerShell)_
+```dotnetcli
+cd obo-console-client
+dotnet add package Microsoft.Identity.Client
+dotnet add package Microsoft.Extensions.Configuration
+dotnet add package Microsoft.Extensions.Configuration.Json
+cd ..
+```
+
+Add an `appsettings.json` file to the console app project. Add the output from the script below to the `appsettings.json` file.
+_(bash)_
+```bash
+echo ''
+echo '{'
+echo '  "AzureAd": {'
+echo '    "TenantId": "'$tenantId'",'
+echo '    "ClientId": "'$appIdApp'",'
+echo '    "RedirectUrl": "http://localhost"'
+echo '  },'
+echo '  "Api1": { '
+echo '    "Scope": "api://'$appIdApi1'/.default",'
+echo '    "BaseUrl": "'$api1ApplicationUrl'"'
+echo '  }'
+echo '}'
+```
+
+Open the project file in VSCode and add the following `ItemGroup` to the project file.
+
+```xml
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+```
+
+Add a file named `TemperatureSamples.cs` to the same directory as the console app project file. Add the following code to the file.
+
+```csharp
+using System.Text.Json.Serialization;
+namespace ConsoleApp1
+{
+    public class TemperatureSample
+    {
+        [JsonPropertyName("date")]
+        public DateTime Date { get; set; }
+        [JsonPropertyName("temperatureC")]
+        public int TemperatureC { get; set; }
+        [JsonPropertyName("summary")]
+        public string Summary { get; set; }
+    }
+}
+```
+
+Replace the content of the `Program.cs` file with the following code.
+
+```csharp
+using Microsoft.Identity.Client;
+using Microsoft.Extensions.Configuration;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace ConsoleApp1
+{
+    class Program
+    {
+        private static HttpClient _sharedClient = new();
+
+        static async Task Main(string[] args)
+        {
+            var configuration =  new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile($"appsettings.json");
+
+            var config = configuration.Build();
+
+            var app = PublicClientApplicationBuilder.Create(config["AzureAD:ClientId"])
+                .WithAuthority(AzureCloudInstance.AzurePublic, config["AzureAD:TenantId"])
+                .WithRedirectUri(config["AzureAD:RedirectUri"])
+                .Build();
+            
+            string[] scopes = { config["Api1:Scope"] };
+
+            AuthenticationResult result = await app.AcquireTokenInteractive(scopes).ExecuteAsync();
+
+            Console.WriteLine($"Token:\t{result.AccessToken}");
+            _sharedClient.BaseAddress = new Uri(config["Api1:BaseUrl"]);
+            _sharedClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.AccessToken);
+            _sharedClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            using HttpResponseMessage response = await _sharedClient.GetAsync("weatherforecast");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = response.Content.ReadAsStringAsync().Result;
+                var weatherForecast = JsonSerializer.Deserialize<List<TemperatureSample>>(responseContent);
+                foreach (var sample in weatherForecast)
+                {
+                    Console.WriteLine($"Date: {sample.Date}, Temperature: {sample.TemperatureC}, Summary: {sample.Summary}");
+                }
+            }
+        }
+    }
+}
+```
+
+Run and test the console app.
 
 ## References
 [Protected web API: Code configuration](https://learn.microsoft.com/en-us/azure/active-directory/develop/scenario-protected-web-api-app-configuration)
+[How to implement Interactive Authentication using MSAL dotNET](https://techdirectarchive.com/2022/06/06/how-to-implement-interactive-authentication-by-using-msal-net/comment-page-1/)
 
