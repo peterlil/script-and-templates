@@ -8,6 +8,7 @@ using Microsoft.Identity.Web;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Diagnostics;
 
 namespace obo_web_client.Pages;
 
@@ -32,11 +33,14 @@ public class IndexModel : PageModel
 
     public void OnGet()
     {
+        // debug claims
+        var claims = System.Security.Claims.ClaimsPrincipal.Current.Claims;
 
+        
         var client = _httpClientFactory.CreateClient();
         string scope = _configuration["obo-api-client-sample:Scopes"];
         var accessToken = _tokenAcquisition.GetAccessTokenForUserAsync(new[] { scope }).Result; // Must have client secret to call an api
-
+        Debug.WriteLine(accessToken);
         client.BaseAddress = new Uri(_configuration["obo-api-client-sample:ApiBaseAddress"]);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

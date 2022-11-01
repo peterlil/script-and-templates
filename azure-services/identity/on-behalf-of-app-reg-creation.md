@@ -6,7 +6,7 @@
 ### Create an appreg for App
 
 ```shell
-appRegAppDisplayName=app
+appRegAppDisplayName=appv2
 
 appRegApp=$(az ad sp create-for-rbac --display-name $appRegAppDisplayName)
 appIdApp=$(echo $appRegApp | jq -r '.appId')
@@ -20,7 +20,7 @@ Make sure to store the content of `appRegApp` somewhere safe.
 ### Create an appreg for Api1
 
 ```shell
-appRegApi1DisplayName=api1
+appRegApi1DisplayName=api1v2
 
 appRegApi1=$(az ad sp create-for-rbac --display-name $appRegApi1DisplayName)
 appIdApi1=$(echo $appRegApi1 | jq -r '.appId')
@@ -34,7 +34,7 @@ Make sure to store the content of `appRegApi1` somewhere safe.
 ### Create an appreg for Api2
 
 ```shell
-appRegApi2DisplayName=api2
+appRegApi2DisplayName=api2v2
 
 appRegApi2=$(az ad sp create-for-rbac --display-name $appRegApi2DisplayName)
 appIdApi2=$(echo $appRegApi2 | jq -r '.appId')

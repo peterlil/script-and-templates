@@ -9,6 +9,7 @@ using System.Text.Json;
 using obo_api_client;
 using Azure.Core;
 using Microsoft.Identity.Client;
+using System.Diagnostics;
 
 namespace obo_api_client.Controllers;
 
@@ -49,6 +50,7 @@ public class WeatherForecastController : ControllerBase
         try
         {
             accessToken = _tokenAcquisition.GetAccessTokenForUserAsync(new[] { scope }).Result; // Must have client secret to call an api
+            Debug.WriteLine(accessToken);
         }
         catch (MicrosoftIdentityWebChallengeUserException ex)
         {

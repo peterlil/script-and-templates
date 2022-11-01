@@ -8,15 +8,9 @@ using Microsoft.Identity.Web.UI;
 
 var builder = WebApplication.CreateBuilder(args);
 
-/*
-string[] clientApiScopes = builder.Configuration.GetValue<string>("obo-api-client-sample:Scopes").Split(' ');
-string[] serverApiScopes = builder.Configuration.GetValue<string>("obo-api-server-sample:Scopes").Split(' ');
-string[] scopes = clientApiScopes.Union(serverApiScopes).ToArray();
-*/
 string[] scopes = new string[]
 {
-    builder.Configuration.GetValue<string>("obo-api-client-sample:Scopes")/*,
-    builder.Configuration.GetValue<string>("obo-api-server-sample:Scopes")*/
+    builder.Configuration.GetValue<string>("obo-api-client-sample:Scopes")
 };
 
 // Add services to the container.
@@ -25,6 +19,7 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
         .EnableTokenAcquisitionToCallDownstreamApi(scopes)
             .AddInMemoryTokenCaches();
 
+// If using Azure App Configuration instead of appsettings.json
 //string appConfigCnStr = builder.Configuration.GetConnectionString("AppConfig");
 //builder.Configuration.AddAzureAppConfiguration(options =>
 //{
@@ -69,6 +64,14 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
+
+// Below from https://stackoverflow.com/questions/51921885/why-claimsprincipal-current-is-returned-null-even-when-the-user-is-authenticated
+// Populates System.Security.Claims.ClaimsPrincipal.Current
+app.Use((context, next) =>
+{
+    Thread.CurrentPrincipal = context.User;
+    return next(context);
+});
 
 app.Run();
 

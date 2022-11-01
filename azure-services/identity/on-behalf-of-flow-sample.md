@@ -2,165 +2,616 @@
 
 ## Generate the code for the apis
 
-Using dotnet 6.0. [Protected web API: Code configuration](https://learn.microsoft.com/en-us/azure/active-directory/develop/scenario-protected-web-api-app-configuration)
-Generate both apis. The api (client) that calls the second api (server).
-dotnet new webapi --auth SingleOrg -o obo-api-client
-dotnet new webapi --auth SingleOrg -o obo-api-server
+This walk-through is based on ASP.NET for .NET 6.0, and consist of one web app, and two apis, api1 and api2. The web app calls api1, and api1 calls api2. The web app is configured to use the on-behalf-of flow.
 
-Generate the webapp
+Generate the code for the three projects. The project generation code can be executed in PowerShell or Bash, but .NET 6.0 needs to be installed in the environment is run.
+
+```dotnetcli
+# web app
 dotnet new webapp --auth SingleOrg -o obo-web-client
-
-## Starting with the obo-api-server
-
-### Create an appreg
-
-Use Azure CLI with [`create-for-rbac`](https://learn.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) to cretae an app registration (an Application Object) with an attached Service Principal (Enterprise App).
-
-```PowerShell
-$appRegDisplayName='obo-api-server-sample'
-
-$appReg = az ad sp create-for-rbac --display-name $appRegDisplayName
+# api1
+dotnet new webapi --auth SingleOrg -o obo-api-client
+# api2
+dotnet new webapi --auth SingleOrg -o obo-api-server
 ```
 
-Make sure to store the content of `appReg` somewhere safe.
+_From now on all scripting code is in bash._
 
-### Set the Application ID URI
+Get the application url for the web app to be used in callback configurations.
 
-Go to the Azure Portal -> Azure Active Directory -> App registrations -> Expose an API -> Click on _Set_ next to _Application ID URI_ and then _Save_ to save the suggested value.
+Open a bash shell and navigate to the directory where the `dotnet new...` commands were executed.
 
-### Expose a scope
+```bash
+# get the application url for the web app
+IFS=';' read -ra URL <<< "$(cat obo-web-client/Properties/launchSettings.json | jq -r ".profiles.obo_web_client.applicationUrl")"
+appApplicationUrl=${URL[0]}
+# get the application url for api 1
+IFS=';' read -ra URL <<< "$(cat obo-api-client/Properties/launchSettings.json | jq -r ".profiles.obo_api_client.applicationUrl")"
+api1ApplicationUrl=${URL[0]}
+# get the application url for api 2
+IFS=';' read -ra URL <<< "$(cat obo-api-server/Properties/launchSettings.json | jq -r ".profiles.obo_api_server.applicationUrl")"
+api2ApplicationUrl=${URL[0]}
+```
 
-Go to the Azure Portal -> Azure Active Directory -> App registrations -> Expose an API -> Click on _Add a scope_.
+## Code changes
 
-UseApi
-Admins and users
-UseApi
-UseApi
-UseApi
-UseApi
+Now, add all projects to one solution in Visual Studio, and make the following changes.
 
-### Copy details to the obo-api-server project
+### In the web app (obo-web-client project)
 
-Change `appsettings.json`to this:
+#### Add packages and change code
 
-```json
+Run `dotnet add package Microsoft.Identity.Web` in _Developer PowerShell_ to add the Microsoft.Identity.Web package to the web app. Make sure you are in the same folder as the .csproj file when you run it.
+
+In the `Program.cs` file, modify the file to look like the following:
+
+```csharp
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Azure.Identity;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
+
+var builder = WebApplication.CreateBuilder(args);
+
+string[] scopes = new string[]
 {
-  "AzureAd": {
-    "Instance": "https://login.microsoftonline.com/",
-    "Domain": "<my-own-domain>.onmicrosoft.com",
-    "TenantId": "<tenant id of <my-own-domain>.onmicrosoft.com<",
-    "ClientId": "<client id of the app reg created above>",
+    builder.Configuration.GetValue<string>("obo-api-client-sample:Scopes")
+};
 
-    "Scopes": "UseApi",
-    "CallbackPath": "/signin-oidc"
-  },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
+// Add services to the container.
+builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"), "OpenIdConnect", "Cookies", true)
+        .EnableTokenAcquisitionToCallDownstreamApi(scopes)
+            .AddInMemoryTokenCaches();
+
+// If using Azure App Configuration instead of appsettings.json
+//string appConfigCnStr = builder.Configuration.GetConnectionString("AppConfig");
+//builder.Configuration.AddAzureAppConfiguration(options =>
+//{
+//    options.Connect(appConfigCnStr)
+//        .ConfigureKeyVault(async kv =>
+//        {
+//            kv.SetCredential(new DefaultAzureCredential());
+//        });
+//});
+
+builder.Services.AddAuthorization(options =>
+{
+    // By default, all incoming requests will be authorized according to the default policy.
+    options.FallbackPolicy = options.DefaultPolicy;
+});
+
+builder.Services.AddRazorPages()
+    .AddMicrosoftIdentityUI();
+
+// Add HttpClient to the container.
+builder.Services.AddHttpClient();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapRazorPages();
+app.MapControllers();
+
+// Below from https://stackoverflow.com/questions/51921885/why-claimsprincipal-current-is-returned-null-even-when-the-user-is-authenticated
+// Populates System.Security.Claims.ClaimsPrincipal.Current
+app.Use((context, next) =>
+{
+    Thread.CurrentPrincipal = context.User;
+    return next(context);
+});
+
+app.Run();
+```
+
+Add a folder `Model` and create the file `TemperatureSample.cs` in it and add the following content in the file.
+
+```csharp
+using System.Text.Json.Serialization;
+namespace obo_web_client
+{
+    public class TemperatureSample
+    {
+        [JsonPropertyName("date")]
+        public DateTime Date { get; set; }
+        [JsonPropertyName("temperatureC")]
+        public int TemperatureC { get; set; }
+        [JsonPropertyName("summary")]
+        public string Summary { get; set; }
     }
-  },
-  "AllowedHosts": "*"
 }
 ```
 
-## Configuring with the obo-web-client
+Open `Index.cshtml` and make it look like this:
 
-Create the appreg for the web client. This appreg will be used to first call the api-server and then to call the api-client.
+```html	
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
 
-```PowerShell
-$appRegDisplayName='obo-web-client--both--sample'
-
-$appReg = az ad sp create-for-rbac --display-name $appRegDisplayName
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>
+        <table class="table table-dark table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Temperature (C)</th>
+                    <th scope="col">Summary</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (ViewData.Keys.Contains("WeatherForecast"))
+                {
+                    foreach (var forecast in (List<TemperatureSample>?)(ViewData["WeatherForecast"]))
+                    {
+                        <tr>
+                            <td>@forecast.Date.ToShortDateString()</td>
+                            <td>@forecast.TemperatureC</td>
+                            <td>@forecast.Summary</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </p>
+</div>
 ```
 
-Make sure to store the content of `appReg` somewhere safe.
+Open `Index.cshtml.cs` and make it look like this:
 
-Assign the API permission to the appreg.
-Go to the Azure Portal -> Azure Active Directory -> App registrations -> API permissions -> Add a permission (My APIs->obo-api-server-sample).
+```csharp
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Net.Http.Headers;
+using Microsoft.Identity.Web;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Diagnostics;
 
-Front-channel logout URL: https://localhost:44321/signout-oidc
+namespace obo_web_client.Pages;
 
-Go to the Azure Portal -> Azure Active Directory -> App registrations -> Authentication -> Add a platform (Web, https://localhost:7286/signin-oidc, Access Token (check), ID Tokens (check))
-
-(Add the client secret to application.json)
-
-
-
-
-
-## Configuring with the obo-api-client
-
-### Create an appreg
-
-Use Azure CLI with [`create-for-rbac`](https://learn.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) to cretae an app registration (an Application Object) with an attached Service Principal (Enterprise App).
-
-```PowerShell
-$appRegDisplayName='obo-api-client-sample'
-
-$appReg = az ad sp create-for-rbac --display-name $appRegDisplayName
-```
-
-Make sure to store the content of `appReg` somewhere safe.
-
-### Set the Application ID URI
-
-Go to the Azure Portal -> Azure Active Directory -> App registrations -> Expose an API -> Click on _Set_ next to _Application ID URI_ and then _Save_ to save the suggested value.
-
-### Expose a scope
-
-Go to the Azure Portal -> Azure Active Directory -> App registrations -> Expose an API -> Click on _Add a scope_.
-
-UseApi
-Admins and users
-UseApi
-UseApi
-UseApi
-UseApi
-
-### Copy details to the obo-api-client project
-
-Change `appsettings.json`to this:
-
-```json
+[Authorize]
+public class IndexModel : PageModel
 {
-  "AzureAd": {
-    "Instance": "https://login.microsoftonline.com/",
-    "Domain": "<my-own-domain>.onmicrosoft.com",
-    "TenantId": "<tenant id of <my-own-domain>.onmicrosoft.com<",
-    "ClientId": "<client id of the app reg created above>",
+    private readonly ILogger<IndexModel> _logger;
+    readonly ITokenAcquisition _tokenAcquisition;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
 
-    "Scopes": "UseApi",
-    "CallbackPath": "/signin-oidc"
-  },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
+    public IndexModel(ILogger<IndexModel> logger,
+        IConfiguration configuration,
+        ITokenAcquisition tokenAcquisition,
+        IHttpClientFactory httpClientFactory)
+    {
+        _logger = logger;
+        _configuration = configuration;
+        _tokenAcquisition = tokenAcquisition;
+        _httpClientFactory = httpClientFactory;
     }
-  },
-  "AllowedHosts": "*"
+
+    public void OnGet()
+    {
+        // debug claims
+        var claims = System.Security.Claims.ClaimsPrincipal.Current.Claims;
+        
+        var client = _httpClientFactory.CreateClient();
+        string scope = _configuration["obo-api-client-sample:Scopes"];
+        var accessToken = _tokenAcquisition.GetAccessTokenForUserAsync(new[] { scope }).Result; // Must have client secret to call an api
+        Debug.WriteLine(accessToken);
+        client.BaseAddress = new Uri(_configuration["obo-api-client-sample:ApiBaseAddress"]);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        var response = client.GetAsync("weatherforecast").Result;
+        if (response.IsSuccessStatusCode)
+        {
+            var responseContent = response.Content.ReadAsStringAsync().Result;
+            var weatherForecast = JsonSerializer.Deserialize<List<TemperatureSample>>(responseContent);
+            ViewData["WeatherForecast"] = weatherForecast;
+            return;
+        }
+
+        throw new ApplicationException($"Status code: {response.StatusCode}, Error: {response.ReasonPhrase}");
+    }
+
 }
 ```
 
-## Configuring with the obo-web-client
+### In the api1 (obo-api-client project)
 
-Assign the API permission to the appreg.
-Go to the Azure Portal -> Azure Active Directory -> App registrations -> API permissions -> Add a permission (My APIs->obo-api-server-sample).
+#### Change the code
 
-Change this to the api-client
-"obo-api-client-sample": {
-    "UseApi": "api://470cfe15-a4af-46d4-be98-46fb384719d5/UseApi",
-    "ApiBaseAddress": "https://localhost:7287"
-  },'
+In the `Program.cs` file, change the following lines:
+
+```csharp
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+```
+
+To this:
+
+```csharp
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"))
+        .EnableTokenAcquisitionToCallDownstreamApi()
+            .AddInMemoryTokenCaches();
+```
+
+Open the file `WeatherForecast.cs` and make it look like this:
+
+```csharp
+namespace obo_api_client;
+using System.Text.Json.Serialization;
+
+public class WeatherForecast
+{
+    [JsonPropertyName("date")]
+    public DateTime Date { get; set; }
+
+    [JsonPropertyName("temperatureC")]
+    public int TemperatureC { get; set; }
+
+    [JsonPropertyName("temperatureF")]
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+
+    [JsonPropertyName("summary")]
+    public string? Summary { get; set; }
+}
+```
+
+Open the file `WeatherForecastController.cs` and make it look like this:
+
+```csharp
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.Resource;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using obo_api_client;
+using Azure.Core;
+using Microsoft.Identity.Client;
+using System.Diagnostics;
+
+namespace obo_api_client.Controllers;
+
+[Authorize]
+[ApiController]
+[Route("[controller]")]
+[RequiredScope(RequiredScopesConfigurationKey = "AzureAd:Scopes")]
+public class WeatherForecastController : ControllerBase
+{
+    private static readonly string[] Summaries = new[]
+    {
+        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    };
+
+    private readonly ILogger<WeatherForecastController> _logger;
+    readonly ITokenAcquisition _tokenAcquisition;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
+
+    public WeatherForecastController(ILogger<WeatherForecastController> logger,
+        IConfiguration configuration,
+        ITokenAcquisition tokenAcquisition,
+        IHttpClientFactory httpClientFactory)
+    {
+        _logger = logger;
+        _configuration = configuration;
+        _tokenAcquisition = tokenAcquisition;
+        _httpClientFactory = httpClientFactory;
+    }
+
+    [HttpGet(Name = "GetWeatherForecast")]
+    public IEnumerable<WeatherForecast> Get()
+    {
+        var client = _httpClientFactory.CreateClient();
+        var scope = _configuration["obo-api-server-sample:Scopes"];
+        string accessToken = string.Empty;
+
+        try
+        {
+            accessToken = _tokenAcquisition.GetAccessTokenForUserAsync(new[] { scope }).Result; // Must have client secret to call an api
+            Debug.WriteLine(accessToken);
+        }
+        catch (MicrosoftIdentityWebChallengeUserException ex)
+        {
+            _tokenAcquisition.ReplyForbiddenWithWwwAuthenticateHeader(new[] { scope }, ex.MsalUiRequiredException);
+            return new List<WeatherForecast>();
+        }
+        catch (MsalUiRequiredException ex)
+        {
+            _tokenAcquisition.ReplyForbiddenWithWwwAuthenticateHeader(new[] { scope }, ex);
+            return new List<WeatherForecast>();
+        }
 
 
+        client.BaseAddress = new Uri(_configuration["obo-api-server-sample:ApiBaseAddress"]);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-## Configuring with the obo-api-client
-Add the permissions on the server api to the appreg
+        var response = client.GetAsync("weatherforecast").Result;
+        if (response.IsSuccessStatusCode)
+        {
+            var responseContent = response.Content.ReadAsStringAsync().Result;
+            var weatherForecast = JsonSerializer.Deserialize<List<WeatherForecast>>(responseContent);
+            
+            return weatherForecast;
+        }
+
+        throw new ApplicationException($"Status code: {response.StatusCode}, Error: {response.ReasonPhrase}");
+    }
+}
+
+```
+
+Done with the code changes, no need to change anything in api2 (obo-api-server project).
+
+## Creating the Azure AD app registrations
+
+```shell
+
+# Create the app regs for the app and apis. 
+appRegAppDisplayName=app
+appRegApi1DisplayName=api1
+appRegApi2DisplayName=api2
+
+exposedScope=UseApi
+
+echo "Creating app registration $appRegAppDisplayName"
+appRegApp=$(az ad sp create-for-rbac --display-name $appRegAppDisplayName)
+appIdApp=$(echo $appRegApp | jq -r '.appId')
+appSecretApp=$(echo $appRegApp | jq -r '.password')
+objectIdAppRegApp=$(az ad app show --id $appIdApp --query '{id: id}' -o tsv)
+
+echo "Creating app registration $appRegApi1DisplayName"
+appRegApi1=$(az ad sp create-for-rbac --display-name $appRegApi1DisplayName)
+appIdApi1=$(echo $appRegApi1 | jq -r '.appId')
+appSecretApi1=$(echo $appRegApi1 | jq -r '.password')
+objectIdAppRegApi1=$(az ad app show --id $appIdApi1 --query '{id: id}' -o tsv)
+
+echo "Creating app registration $appRegApi2DisplayName"
+appRegApi2=$(az ad sp create-for-rbac --display-name $appRegApi2DisplayName)
+appIdApi2=$(echo $appRegApi2 | jq -r '.appId')
+objectIdAppRegApi2=$(az ad app show --id $appIdApi2 --query '{id: id}' -o tsv)
+
+echo "Configuring app registration $appRegApi2DisplayName"
+# Set the sign in audience and Application ID URI for Api2
+az ad app update --id $appIdApi2 \
+    --sign-in-audience 'AzureADMyOrg' \
+    --identifier-uris api://$appIdApi2
+
+# Expose scopes
+scopeNameApi2=$exposedScope
+scopes=$( jq -n \
+    --arg id $(uuidgen) \
+    --arg scope $scopeNameApi2 \
+    '{"api":{"oauth2PermissionScopes":[{"adminConsentDescription":"Allow access to the dummy api","adminConsentDisplayName":"Dummy Api Access","id":$id,"isEnabled":true,"type":"User","userConsentDescription":"Allow access to the dummy api","userConsentDisplayName":"Dummy Api Access","value":$scope}]}}' )
+
+# This should be the way to do it, but feels like az cli lags behind
+#$oauth2Permissions | Out-File -FilePath .\oauth2Permissions.json
+#az ad app update --id $appIdApi2 --set api.oauth2PermissionScopes=@oauth2Permissions.json
+
+# use this rest call instead
+az rest --method PATCH \
+    --headers 'Content-Type=application/json' \
+    --uri https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi2 \
+    --body "$scopes"
+
+echo "Configuring app registration $appRegApi1DisplayName"
+
+# Set the sign in audience and Application ID URI for Api2
+az ad app update --id $appIdApi1 \
+    --sign-in-audience 'AzureADMyOrg' \
+    --identifier-uris api://$appIdApi1
+
+# Expose scopes
+scopeNameApi1=$exposedScope
+scopes=$( jq -n \
+    --arg id $(uuidgen) \
+    --arg scope $scopeNameApi1 \
+    '{"api":{"oauth2PermissionScopes":[{"adminConsentDescription":"Allow access to the dummy api","adminConsentDisplayName":"Dummy Api Access","id":$id,"isEnabled":true,"type":"User","userConsentDescription":"Allow access to the dummy api","userConsentDisplayName":"Dummy Api Access","value":$scope}]}}' )
+
+az rest --method PATCH \
+    --headers 'Content-Type=application/json' \
+    --uri https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi1 \
+    --body "$scopes"
+
+# Set API permissions
+# Get the scopes for Api2
+appsWithScopes=$(az rest --method GET \
+    --uri https://graph.microsoft.com/v1.0/myorganization/me/ownedObjects/$/Microsoft.Graph.Application)
+
+appScope=$(echo $appsWithScopes | jp "value[?(api.oauth2PermissionScopes[0].value=='$scopeNameApi2' && appId=='$appIdApi2')].{appId:appId,scopeId:api.oauth2PermissionScopes[0].id,value:api.oauth2PermissionScopes[0].value}")
+
+permissions=$(jq -n \
+    --arg appId $(echo $appScope | jq -r .[0].appId) \
+    --arg scopeId $(echo $appScope | jq -r .[0].scopeId) \
+    '[{"resourceAppId":$appId,"resourceAccess":[{"id":$scopeId,"type":"Scope"}]}]')
+
+az ad app update --id $objectIdAppRegApi1 \
+    --required-resource-accesses "$permissions"
+
+# Set the knownClientApplications
+knownClientApps=$( jq -n \
+    --arg appId $appIdApp \
+    '{"api":{"knownClientApplications":[$appId]}}' )
+	
+az rest --method PATCH \
+    --headers 'Content-Type=application/json' \
+    --uri https://graph.microsoft.com/v1.0/applications/$objectIdAppRegApi1 \
+    --body "$knownClientApps"
 
 
-// TODO: Create a new appreg for the client, which only can access the client api and see how that goes.
+echo "Configuring app registration $appRegAppDisplayName"
+# Set the sign in audience and Application ID URI for App
+az ad app update --id $appIdApp \
+    --sign-in-audience 'AzureADMyOrg'
 
+# Add the web platform and reply to address
+az ad app update --id $objectIdAppRegApp \
+    --web-redirect-uris "$appApplicationUrl/signin-oidc" \
+    --enable-access-token-issuance true \
+    --enable-id-token-issuance true
 
+# Set API permissions
+# Get the scopes for Api1 & Api2
+appsWithScopes=$(az rest --method GET \
+    --uri https://graph.microsoft.com/v1.0/myorganization/me/ownedObjects/$/Microsoft.Graph.Application)
+
+appScope=$(echo $appsWithScopes | jp "value[?(api.oauth2PermissionScopes[0].value=='$scopeNameApi1' && appId=='$appIdApi1')].{appId:appId,scopeId:api.oauth2PermissionScopes[0].id,value:api.oauth2PermissionScopes[0].value}")
+
+permissions=$(jq -n \
+    --arg appId1 $(echo $appScope | jq -r .[0].appId) \
+    --arg scopeId1 $(echo $appScope | jq -r .[0].scopeId) \
+    '[{"resourceAppId":$appId1,"resourceAccess":[{"id":$scopeId1,"type":"Scope"}]}]')
+
+az ad app update --id $objectIdAppRegApp \
+    --required-resource-accesses "$permissions"
+
+echo "#####   Configuration information   #####"
+
+instance=https://login.microsoftonline.com/
+domain=$(az rest --method get --url https://graph.microsoft.com/v1.0/domains --query 'value[?isDefault].id' -o tsv)
+tenantId=$(az account show --query tenantId -o tsv)
+echo ''
+echo '=====Backend Api (Api2) appsettings.json====='
+echo ''
+echo '  "AzureAd": {'
+echo '    "Instance": "'$instance'",'
+echo '    "Domain": "'$domain'",'
+echo '    "TenantId": "'$tenantId'",'
+echo '    "ClientId": "'$appIdApi2'",'
+echo '    "Scopes": "'$scopeNameApi2'",'
+echo '    "CallbackPath": "/signin-oidc"'
+echo '  }'
+echo ''
+echo '=====Middleware Api (Api1) appsettings.json====='
+echo ''
+echo '  "AzureAd": {'
+echo '    "Instance": "'$instance'",'
+echo '    "Domain": "'$domain'",'
+echo '    "TenantId": "'$tenantId'",'
+echo '    "ClientId": "'$appIdApi1'",'
+echo '    "ClientSecret": "'$appSecretApi1'",'
+echo '    "Scopes": "'$scopeNameApi1'",'
+echo '    "CallbackPath": "/signin-oidc"'
+echo '  },'
+echo '  "obo-api-server-sample": { '
+echo '    "Scopes": "api://'$appIdApi2'/.default",'
+echo '    "ApiBaseAddress": "'$api2ApplicationUrl'"'
+echo '  }'
+echo ''
+echo '=====Web App (App) appsettings.json====='
+echo ''
+echo '  "AzureAd": {'
+echo '    "Instance": "'$instance'",'
+echo '    "Domain": "'$domain'",'
+echo '    "TenantId": "'$tenantId'",'
+echo '    "ClientId": "'$appIdApp'",'
+echo '    "ClientSecret": "'$appSecretApp'",'
+echo '    "CallbackPath": "/signin-oidc",'
+echo '    "SignedOutCallbackPath": "/signout-oidc"'
+echo '  },'
+echo '  "obo-api-client-sample": { '
+echo '    "Scopes": "api://'$appIdApi1'/.default",'
+echo '    "ApiBaseAddress": "'$api1ApplicationUrl'" // Replace with the base address of the backend api'
+echo '  }'
+echo ''
+
+```
+
+## Create the app roles
+
+```bash
+# create user-role for the app users for each appreg (necessary to get the roles claim in the token)
+displayNames=('app' 'api1' 'api2')
+roleName='app-user'
+
+role=$(jq -n '[
+        {"allowedMemberTypes": [
+            "User"
+        ],
+        "description": "'$appDisplayName' users can use the application/api",
+        "displayName": "'$appDisplayName' user",
+        "isEnabled": "true",
+        "value": "'$roleName'"}]')
+
+for appName in ${displayNames[@]}; do
+	echo "Creating role $appName"
+	
+    oid=$(az ad app list --query "[?displayName=='$appName'].id" -o tsv)
+	
+    az ad app update --id $oid --app-roles "$role"
+ 
+done
+
+# make sure app role assignements are mandatory on the web app
+appId=$(az ad app list --query "[?displayName=='$appRegAppDisplayName'].appId" -o tsv)
+az ad sp update --id $appId --set appRoleAssignmentRequired=true
+
+```
+
+## Create the Azure AD group and add a user to the group
+
+```bash
+# Create the Azure AD group
+az ad group create --display-name 'app-users' \
+                   --mail-nickname 'app-users'
+
+# Add the user to the group
+userName=appuser@mngenv319828.onmicrosoft.com
+az ad group member add --group 'app-users' \
+                       --member-id $(az ad user show --id $userName --query "id" -o tsv)
+```
+
+## Assign roles to groups
+
+```shell
+groupName=app-users
+roleName=app-user
+displayNames=('app' 'api1' 'api2')
+
+goid=$(az ad group show --group "$groupName" --query "id" --output tsv)
+
+for appName in ${displayNames[@]}; do
+    appId=$(az ad app list --query "[?displayName=='$appName'].appId" -o tsv)
+    roId=$(az ad app show --id $appId --query "appRoles[?value=='$roleName'].id" -o tsv)
+    spId=$(az ad sp list --all --query "[?appId=='$appId'].id" -o tsv)
+    az rest -m POST -u https://graph.microsoft.com/v1.0/groups/$goid/appRoleAssignments -b "{\"principalId\": \"$goid\", \"resourceId\": \"$spId\",\"appRoleId\": \"$roId\"}"
+done
+```
+
+## Done
+You may now test the apps.
+
+Users not in roles still has access :-(
+
+## References
+[Protected web API: Code configuration](https://learn.microsoft.com/en-us/azure/active-directory/develop/scenario-protected-web-api-app-configuration)
 
