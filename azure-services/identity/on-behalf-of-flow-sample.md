@@ -1,5 +1,16 @@
 # On-behalf-of OAuth 2.0 flow sample
 
+## Prerequisites
+
+- PowerShell and bash (WSL2).
+- Azure CLI installed in both Windows and WSL2.
+- [jp](https://github.com/jmespath/jp) installed in WSL2. I installed using this command:
+  ```
+  sudo wget https://github.com/jmespath/jp/releases/latest/download/jp-linux-amd64 \
+    -O /usr/local/bin/jp  && sudo chmod +x /usr/local/bin/jp
+  ```
+  
+
 ## Generate the code for the apis
 
 This walk-through is based on ASP.NET for .NET 6.0, and consist of one web app and two apis, api1 and api2. The web app calls api1, and api1 calls api2. The web app is configured to use the on-behalf-of flow.
