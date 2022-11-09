@@ -14,7 +14,7 @@
 	// "forwardPorts": [5000, 5001],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "./.devcontainer/csharp/postCreateCommand.sh"
+	"postCreateCommand": "/bin/bash ./.devcontainer/csharp/postCreateCommand.sh > ~/post-create.log"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
