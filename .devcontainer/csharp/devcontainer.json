@@ -8,13 +8,13 @@
 		"ghcr.io/devcontainers/features/azure-cli:1": {},
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/eitsupi/devcontainer-features/jq-likes:0": {}
-	}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [5000, 5001],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "dotnet restore",
+	"postCreateCommand": "./.devcontainer/csharp/postCreateCommand.sh"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
