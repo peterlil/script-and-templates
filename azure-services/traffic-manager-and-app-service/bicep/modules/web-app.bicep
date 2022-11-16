@@ -1,7 +1,7 @@
 param webApp1Location string
 param webApp2Location string
-param webApp1LocationAbbr string
-param webApp2LocationAbbr string
+param webApp1Abbr string
+param webApp2Abbr string
 param solutionName string
 param sku string = 'S1'
 @allowed([
@@ -10,10 +10,10 @@ param sku string = 'S1'
 ])
 param backendAppNo string
 
-var hostingPlan1Name = '${solutionName}-${webApp1LocationAbbr}-asp'
-var hostingPlan2Name = '${solutionName}-${webApp2LocationAbbr}-asp'
-var webAppName1 = '${solutionName}-1-webapp'
-var webAppName2 = '${solutionName}-2-webapp'
+var hostingPlan1Name = '${solutionName}-${webApp1Abbr}-asp'
+var hostingPlan2Name = '${solutionName}-${webApp2Abbr}-asp'
+var webAppName1 = '${solutionName}-${webApp1Abbr}-webapp'
+var webAppName2 = '${solutionName}-${webApp2Abbr}-webapp'
 var tmName = '${solutionName}-tmp'
 
 resource hostingPlan1 'Microsoft.Web/serverfarms@2022-03-01' = {
@@ -68,32 +68,12 @@ resource webApp2 'Microsoft.Web/sites@2022-03-01' = {
   }
 }
 
-resource webApp3 'Microsoft.Web/sites@2022-03-01' = {
-  name: '${webAppName2}-copy'
-  location: webApp2Location
-  properties: {
-    serverFarmId: hostingPlan2.id
-    httpsOnly: true
-    siteConfig: {
-      minTlsVersion: '1.2'
-      appSettings: [
-        {
-          name: 'sampleapp:ServiceName'
-          value: 'Web App 2'
-        }
-      ]
-    }
-  }
-}
-
-
-
 resource tm 'Microsoft.Network/trafficmanagerprofiles@2018-08-01' = {
   name: tmName
   location: 'global'
   properties: {
     profileStatus: 'Enabled'
-    trafficRoutingMethod: 'Priority'
+    trafficRoutingMethod: 'Performance'
     dnsConfig: {
       relativeName: tmName
       ttl: 10
@@ -123,15 +103,15 @@ resource tm 'Microsoft.Network/trafficmanagerprofiles@2018-08-01' = {
           priority: backendAppNo == '1' ? 1 : 1000
         }
       }
-      {
-        type: 'Microsoft.Network/trafficManagerProfiles/azureEndpoints'
-        name: 'endpoint2'
-        properties: {
-          targetResourceId: webApp2.id
-          endpointStatus: 'Enabled'
-          priority: backendAppNo == '2' ? 1 : 1000
-        }
-      }
+      // {
+      //   type: 'Microsoft.Network/trafficManagerProfiles/azureEndpoints'
+      //   name: 'endpoint2'
+      //   properties: {
+      //     targetResourceId: webApp2.id
+      //     endpointStatus: 'Enabled'
+      //     priority: backendAppNo == '2' ? 1 : 1000
+      //   }
+      // }
     ]
   }
 }
