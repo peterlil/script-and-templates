@@ -1,0 +1,37 @@
+
+POST http://echoapi.cloudapp.net/api/resource HTTP/1.1
+Host: echoapi.cloudapp.net
+Content-Type: application/json
+
+"{\r\n\t\"vehicleType\": \"train\",\r\n\t\"maxSpeed\": 125,\r\n\t\"avgSpeed\": 90,\r\n\t\"speedUnit\": \"mph\"\r\n}"
+
+###
+
+POST https://apim-peterlil.azure-api.net/echo/resource HTTP/1.1
+Host: apim-peterlil.azure-api.net
+Content-Type: application/json
+ocp-apim-subscription-key: 336afba91a1643c68347a6dc2ec37b6a
+
+"{\r\n\t\"vehicleType\": \"train\",\r\n\t\"maxSpeed\": 125,\r\n\t\"avgSpeed\": 90,\r\n\t\"speedUnit\": \"mph\"\r\n}"
+
+###
+GET http://echoapi.cloudapp.net/api/resource?name=peter HTTP/1.1
+Host: echoapi.cloudapp.net
+
+
+###
+
+GET https://shgw.peterlabs.net/api/echo/resource?name=peter HTTP/1.1
+Host: shgw.peterlabs.net
+ocp-apim-subscription-key: 336afba91a1643c68347a6dc2ec37b6a
+
+###
+
+GET https://shgw2.peterlabs.net/api/echo/resource?param1=sample HTTP/1.1
+Host: shgw2.peterlabs.net
+Ocp-Apim-Subscription-Key: 336afba91a1643c68347a6dc2ec37b6a
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjJaUXBKM1VwYmpBWVhZR2FYRUpsOGxWMFRPSSJ9.eyJhdWQiOiI5OTdmMGZkMi1hNDllLTQxNDItOWE4MC04NWY5NTU0YmI5NDkiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vN2JjYWU5MWEtNDMyNS00ODIxLTg0YjEtYWFjOWQ1Y2FhYTIyL3YyLjAiLCJpYXQiOjE2Njg2MTQ1MDAsIm5iZiI6MTY2ODYxNDUwMCwiZXhwIjoxNjY4NjE4ODkzLCJhaW8iOiJBVFFBeS84VEFBQUFCSVlFQUpod1haVWg4YTR6QTBDKzVLZkxwdHJWRnhYUWFRSXhSY3BlMW1tME5JTm43MDdpOU1FS0JrTGdvYXZ3IiwiYXpwIjoiZTZjZTJmYzYtZjUzYS00MDg5LWI1MjktYzQyMzBmNGVmYzFiIiwiYXpwYWNyIjoiMSIsIm5hbWUiOiJQZXRlciBMaWxqZW5yb3RoIiwib2lkIjoiZDBlNmM4ZjMtODM3OC00MDI5LWE5ZjEtM2NiMDljYTI5OGI0IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGV0ZXJsaWxAbW5nZW52MzE5ODI4Lm9ubWljcm9zb2Z0LmNvbSIsInJoIjoiMC5BVmtBR3VuS2V5VkRJVWlFc2FySjFjcXFJdElQZjVtZXBFSkJtb0NGLVZWTHVVbWRBR2suIiwic2NwIjoiVXNlQXBpIiwic3ViIjoiRXZ1RlJsTHZ3eGNyeTFXdS11OTRaRzg2YmVHaS1CTXdzdjQ1Rmw3SFJvUSIsInRpZCI6IjdiY2FlOTFhLTQzMjUtNDgyMS04NGIxLWFhYzlkNWNhYWEyMiIsInV0aSI6ImQtb29hTGd1c0VxQ01GMkUtY3hCQUEiLCJ2ZXIiOiIyLjAifQ.mP9zH7rxur92QF0xzh1q1bVyTMkNardG1KDHVsiAxUeqSFrVG49_SgycZjjky-DiJV6ePFS78RZKysj_iKbI5zCF0SH6uKwy7j8QtrD-brjxTQWBT8OKOljvmQ6RSoVcKPZYkfY2ebQQawk9olfafGEgDds3sh5TO5NwsuNwa0NcLIYZze2l-VX_YXEuVIZM0xybO08Asv3KZtyPBDWFPucOJc1RJLB-yNdQvPih3-03frv_8jzSTtwZF8wbjspnBxgPC0lwkD25ovsq01xhg6IaFmyN8LAVM0PMxMaMqGlWEnuHqKvR63ib8RY7SpP75Lh2Cm80q94BAEBVNmnRDw
+
+###
+GET https://www.google.se HTTP/1.1
+Host: www.google.se
