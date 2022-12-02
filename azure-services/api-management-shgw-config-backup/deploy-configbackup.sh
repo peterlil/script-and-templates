@@ -1,0 +1,2 @@
+kubectl create secret generic shgwcb-token --from-literal=value="GatewayKey shgw-configbackup&202212181407&vGVdPcRREACzVqR0bvRUdqRDDFkWixafQ2SFWcH8voFl09l0cqTTQw+ww3bZCgNNisGsYienR8hKJASnY+Dmdw=="  --type=Opaque  --namespace=configbackup
+kubectl apply -f deploy-configbackup.yml
