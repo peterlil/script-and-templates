@@ -35,3 +35,5 @@ foreach($function in $functions.data)
 }
 
 ```
+
+_Credit goes to [jonasnorlund](https://github.com/jonasnorlund)._
