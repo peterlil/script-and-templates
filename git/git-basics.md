@@ -28,7 +28,7 @@ git config user.name "<username>"
 git config user.email "<email@example.com>"
 ```
 
-List current settings
+## List current settings
 
 ```powershell
 # all settings
@@ -153,9 +153,23 @@ git ls-files -i -c --exclude-from=.gitignore | xargs git rm --cached
 git ls-files -i -c --exclude-from=.gitignore | %{git rm --cached $_}
 ```
 
+# Authentication issues
+
+## Fix when git has lost auth token for Enterprise account
+
+The symptom is that you are trying to push/pull from a remote and you get an error like this: `remote: Repository not found.`
+
+Solution:
+Set the enterprise username in the remote url, this will force a new login next time when you try to push/pull.
+
+```PowerShell
+git remote set-url origin https://<username>@<url to repo>
+```
 
 
 # Troubleshooting
+```PowerShell
+
 
 ## git problems with vscode
 
