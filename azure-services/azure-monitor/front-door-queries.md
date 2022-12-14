@@ -49,4 +49,17 @@ AzureDiagnostics
 | where ResourceId == "/SUBSCRIPTIONS/7F619149-07DC-42AD-8987-5ED45CA65301/RESOURCEGROUPS/LOADBALANCERSPIKEFRONTDOORSTANDARDGROUP/PROVIDERS/MICROSOFT.CDN/PROFILES/LOADBALANCERSPIKEFRONTDOORSTANDARD"
 | where TimeGenerated between (datetime(2022-05-20 07:00:00) .. datetime(2022-05-20 07:01:10))
 
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.CDN" and Category == "FrontDoorAccessLog"
+| where TimeGenerated > datetime(2022-12-07 16:32:00)
+| summarize Requests = count(), AvgDuration = avg(timeTaken_d), 
+    Percentile95 = percentile(timeTaken_d, 95) by pop_s
+
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.CDN" and Category == "FrontDoorAccessLog"
+| where TimeGenerated > datetime(2022-12-07 16:32:00)
+| summarize Requests = count(), AvgDuration = avg(timeTaken_d), 
+    Percentile95 = percentile(timeTaken_d, 95) by httpStatusCode_d, pop_s
+
+
 ```
