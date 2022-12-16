@@ -12,3 +12,4 @@ Explanation | Command
 ----------- | -------
 Configure a context for a namespace |`kubectl config set-context <name> --namespace=<namespace> --cluster=<clustername> --user=<user>`
 ssh to a pod | `kubectl exec <podname> -i -t -- bash -il`
+Restart all pods | <pre>pods=$(k get pods -o name --no-headers=true)<br>while IFS= read -r pod; do<br>&nbsp;&nbsp;k delete $pod<br>done <<< "$pods"</pre>
