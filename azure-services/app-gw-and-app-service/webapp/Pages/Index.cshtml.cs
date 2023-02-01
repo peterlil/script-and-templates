@@ -16,6 +16,7 @@ namespace webapp.Pages
             _configuration = configuration;
             ApiUri = String.Empty;
             WeatherSummary = String.Empty;
+            CallingIp = "0.0.0.0";
         }
 
         public void OnGet()
