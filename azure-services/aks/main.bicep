@@ -44,20 +44,23 @@ module aks 'modules/aks.bicep' = {
     clusterName: clusterName
     linuxAdminUsername: clusterAdminName
     sshRSAPublicKey: sshRSAPublicKey
-    // dnsPrefix: clusterDnsPrefix
+    vnetName: vnet.outputs.vnetName
   }
 }
 ///// Module: AKS
 ////////////////////////////////////////////////////////////////////////////////
 
+
+// This bicep template is currently not used as it's easier to let the add-on create an appgw.
 ////////////////////////////////////////////////////////////////////////////////
 ///// Module: app-gw
-module appgw 'modules/appgw.bicep' = {
-  scope: resourceGroup(rg.name)
-  name: 'app-gw'
-  params: {
-    location: location
-  }
-}
+// module appgw 'modules/appgw.bicep' = {
+//   scope: resourceGroup(rg.name)
+//   name: 'app-gw'
+//   params: {
+//     location: location
+//     vnetName: vnet.outputs.vnetName
+//   }
+// }
 ///// Module: AKS
 ////////////////////////////////////////////////////////////////////////////////

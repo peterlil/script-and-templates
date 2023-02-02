@@ -27,8 +27,9 @@ param linuxAdminUsername string
 param sshRSAPublicKey string
 
 param vnetName string = 'aks-vnet'
-param aksNodeSubnetName string = 'aks-node-subnet'
+param aksNodeSubnetName string = 'aks-subnet'
 param aksPodCidr string = '10.224.128.0/17'
+param appgwSubnetCidr string = '10.225.0.0/24'
 
 var dockerBridgeCidr = '172.17.0.1/16'
 var dnsServiceIp = '10.0.0.10'
@@ -79,6 +80,14 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
       networkPlugin: 'kubenet'
       podCidr: aksPodCidr
       serviceCidr: serviceCidr
+    }
+    addonProfiles: {
+      ingressApplicationGateway:{
+        enabled: true
+        config: {
+          subnetPrefix: appgwSubnetCidr
+        }
+      }
     }
   }
 }

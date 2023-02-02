@@ -1,18 +1,25 @@
+// This bicep template is currently not used as it's easier to let the add-on create an appgw.
 param location string
 param appgwName string = 'aks-appgw'
 param vnetName string = 'aks-vnet'
 param appgwSubnetName string = 'appgw-subnet'
 
 var publicFrontendIpConfigName = 'public-endpoint'
-var frontendPublicIpName = 'frontend-public-ip'
+var frontendPublicIpName = 'appgw-frontend-public-ip'
+var frontendPortTlsName = 'tls'
+var frontendPortTlsPort = 443
 var backendVnetConfig = 'backend-vnet'
 
 
 resource frontendPublicIp 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: frontendPublicIpName
+  location: location
   sku: {
     name:'Standard'
-    tier:'Global'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
   }
 }
 
@@ -28,9 +35,10 @@ resource appgwSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-07-01' exis
 resource appgw 'Microsoft.Network/applicationGateways@2022-07-01' = {
   name: appgwName
   location: location
-  identity: {
-    type:'SystemAssigned'
-  }
+  // SystemAssigned is not supported, UserAssigned TBD
+  // identity: {
+  //   type:'SystemAssigned'
+  // }
   properties: {
     autoscaleConfiguration: {
       minCapacity: 1
@@ -46,16 +54,25 @@ resource appgw 'Microsoft.Network/applicationGateways@2022-07-01' = {
         }
       }
     ]
+    frontendPorts: [
+      {
+        name: frontendPortTlsName
+        properties: {
+          port: frontendPortTlsPort
+        }
+      }
+    ]
     gatewayIPConfigurations: [
       {
         name: backendVnetConfig
         properties: {
-          subnet: appgwSubnet
+          subnet: {
+            id: appgwSubnet.id
+          }
         }
       }
     ]
     sku: {
-      capacity: 1
       name: 'WAF_v2'
       tier: 'WAF_v2'
     }

@@ -18,7 +18,7 @@ Kubenet
 vnet/subnet       | cidr             | Address range
 ------------------|------------------|------------------------------
 aks-vnet          | 10.224.0.0/12    | 10.224.0.0   - 10.239.255.255
-aks-subnet        | 10.224.0.0/16    | 10.224.0.0   - 10.224.255.255
+aks-subnet        | 10.224.0.0/24    | 10.224.0.0   - 10.224.255.255
 appgw-subnet      | 10.225.0.0/24    | 10.225.0.0   - 10.225.0.255
 
 <!-- Maybe use these when doing CNI? -->
@@ -42,7 +42,10 @@ az deployment sub create \
         clusterName=labcluster \
         clusterAdminName='peter' \
         sshRSAPublicKey="$publicKey"
+
 ```
+
+
 
 ## Create the App GW
 
