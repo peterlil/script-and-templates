@@ -9,6 +9,9 @@ param clusterName string = 'labcluster'
 param clusterAdminName string
 param sshRSAPublicKey string
 
+// acr
+param acrName string = 'acrforlabcluster'
+
 // appgw
 
 
@@ -48,6 +51,19 @@ module aks 'modules/aks.bicep' = {
   }
 }
 ///// Module: AKS
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+///// Module: ACR
+module acr 'modules/acr.bicep' = {
+  scope: resourceGroup(rg.name)
+  name: 'acr'
+  params: {
+    location: location
+    acrName: acrName
+  }
+}
+///// Module: ACR
 ////////////////////////////////////////////////////////////////////////////////
 
 

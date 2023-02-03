@@ -48,6 +48,7 @@ resource appgw 'Microsoft.Network/applicationGateways@2022-07-01' = {
       {
         name: publicFrontendIpConfigName
         properties: {
+          privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
             id: frontendPublicIp.id
           }
@@ -69,6 +70,24 @@ resource appgw 'Microsoft.Network/applicationGateways@2022-07-01' = {
           subnet: {
             id: appgwSubnet.id
           }
+        }
+      }
+    ]
+    backendAddressPools: [
+      {
+        name: 'dummyAddressPool'
+        properties: {}
+      }
+    ]
+    backendHttpSettingsCollection: [
+      {
+        name: 'dummyHttpSetting'
+        properties: {
+          port: frontendPortTlsPort
+          protocol: 'Http'
+          cookieBasedAffinity: 'Disabled'
+          pickHostNameFromBackendAddress: false
+          requestTimeout: 20
         }
       }
     ]

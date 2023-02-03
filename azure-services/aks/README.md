@@ -11,7 +11,19 @@ az account set --name <sub-name>
 az account show
 ```
 
-## Provision the vnet
+## Common variables and aliases
+```bash
+resourceGroupName=aks-lab
+clusterName=labcluster
+acrName=acrforlabcluster
+apiProjName=aks-webapi
+imageVersion=1.0.0
+appGwName=ingress-appgateway
+appGwSubnetCidr=10.225.0.0/24
+alias k=kubectl
+```
+
+## Setup of the vnet
 
 Kubenet
 
@@ -32,33 +44,81 @@ This creates an AKS cluster with:
 
 ```bash
 publicKey=$(cat ~/.ssh/id_rsa.pub)
-
 az deployment sub create \
     --location 'sweden central' \
     --name 'full-deployment-'$(date "+%Y-%m-%d_%H%M%S") \
     -f 'azure-services\aks\main.bicep' \
     -p location='sweden central' \
-        resourceGroupName=aks-lab \
-        clusterName=labcluster \
+        resourceGroupName=$resourceGroupName \
+        clusterName=$clusterName \
         clusterAdminName='peter' \
-        sshRSAPublicKey="$publicKey"
+        sshRSAPublicKey="$publicKey" \
+        acrName=$acrName
+
+az aks addon enable \
+    -n $clusterName \
+    -g $resourceGroupName \
+    -a ingress-appgw \
+    --appgw-name $appGwName \
+    --appgw-subnet-cidr $appGwSubnetCidr
+
+az aks get-credentials --resource-group $resourceGroupName --name $clusterName
+
+k get nodes -o wide
+k get pods -o wide -A
+
+az aks update -n $clusterName -g $resourceGroupName --attach-acr $acrName
+```
+
+## Generate an api
+
+```bash
+rm -rf $apiProjName 
+dotnet new webapi -au none -minimal -o azure-services/aks/$apiProjName
+rm azure-services/aks/$apiProjName/Program.cs
+{
+cat <<EOF >>azure-services/aks/$apiProjName/Program.cs
+var builder = WebApplication.CreateBuilder(args);
+// Add services to the container.
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+var app = builder.Build();
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+app.MapGet("/", () => "Hello World!");
+app.Run();
+EOF
+}
 
 ```
 
+## Build the image and push it to the registry
 
+```bash
+#docker build --progress=plain --no-cache -t aks-webapi -f Dockerfile . # Use for troubleshooting image builds
+docker build -t $acrName.azurecr.io/$apiProjName:$imageVersion -f ./azure-services/aks/Dockerfile ./azure-services/aks
 
-## Create the App GW
+az acr login --name $acrName
+docker push $acrName.azurecr.io/$apiProjName:$imageVersion
+```
 
-One vnet and one subnet got created when the cluster was created. For the app gw we need one more subnet.
+## Provision the pod
+```bash
+k apply -f ./azure-services/aks/aks-webapi.yaml
+```
 
-vnet/subnet       | cidr           | Address range
-------------------|----------------|------------------------------
-aks-vnet-17831063 | 10.224.0.0/12  | 10.224.0.0 - 10.239.255.255
-aks-subnet        | 10.224.0.0/16  | 10.224.0.0 - 10.224.255.255
-appgw-subnet      | 10.225.0.0/24  | 10.225.0.0 - 10.225.0.255
-
-
-
-
-
-
+## Remove the deployment
+```bash
+k delete pod aks-webapi
+k delete svc aks-webapi
+k delete ingress aks-webapi
+```
