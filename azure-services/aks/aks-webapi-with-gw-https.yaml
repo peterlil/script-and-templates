@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aks-webapi-with-gw-https
+  labels:
+    app: aks-webapi-with-gw-https
+spec:
+  containers:
+  - image: "acrforlabcluster.azurecr.io/aks-webapi:1.0.0"
+    name: aks-webapi-image
+    ports:
+    - containerPort: 80
+      protocol: TCP
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: aks-webapi-with-gw-https
+spec:
+  selector:
+    app: aks-webapi-with-gw-https
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aks-webapi-with-gw-https
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+    appgw.ingress.kubernetes.io/appgw-ssl-certificate: aks-webapi-appgw-cert
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          service:
+            name: aks-webapi-with-gw-https
+            port:
+              number: 80
+        pathType: Exact

@@ -73,7 +73,7 @@ az aks update -n $clusterName -g $resourceGroupName --attach-acr $acrName
 ## Generate an api
 
 ```bash
-rm -rf $apiProjName 
+rm -rf azure-services/aks/$apiProjName
 dotnet new webapi -au none -minimal -o azure-services/aks/$apiProjName
 rm azure-services/aks/$apiProjName/Program.cs
 {
@@ -111,9 +111,23 @@ az acr login --name $acrName
 docker push $acrName.azurecr.io/$apiProjName:$imageVersion
 ```
 
-## Provision the pod
+## Provision the pod (http)
 ```bash
-k apply -f ./azure-services/aks/aks-webapi.yaml
+k apply -f ./azure-services/aks/aks-webapi-http.yaml
+```
+
+## Provision the pod (https)
+
+```bash
+
+k apply -f ./azure-services/aks/aks-webapi-https.yaml
+```
+
+
+## Look at the provisioned resources
+```bash
+k get pods -o wide
+k get svc -o wide
 ```
 
 ## Remove the deployment
