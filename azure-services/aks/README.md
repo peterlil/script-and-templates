@@ -126,6 +126,8 @@ az role assignment create \
     --scope /subscriptions/$subscriptionId/resourceGroups/$resourceGroupName/providers/Microsoft.Network/applicationGateways/$appGwName \
     --assignee $(echo $realIngressAppGwIdentity | jq -r '.principalId')
 
+// UGLY: Refresh the credentials by restarting the cluster
+
 # Get the credentials for kubectl
 az aks get-credentials --resource-group $resourceGroupName --name $clusterName --overwrite-existing
 
