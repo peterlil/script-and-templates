@@ -1,14 +1,17 @@
-// This bicep template is currently not used as it's easier to let the add-on create an appgw.
 param location string
 param appgwName string = 'aks-appgw'
 param vnetName string = 'aks-vnet'
 param appgwSubnetName string = 'appgw-subnet'
+param appGwMiName string = 'appgw-identity'
 
 var publicFrontendIpConfigName = 'public-endpoint'
 var frontendPublicIpName = 'appgw-frontend-public-ip'
-var frontendPortTlsName = 'tls'
-var frontendPortTlsPort = 443
-var backendVnetConfig = 'backend-vnet'
+var frontendPortName = '${appgwName}-ip'
+var frontendPortIpConfigDefaultPort = 80
+var dummyBackendPort = 80
+var appGwVnetConfigName = 'appGwVnetConfig'
+var dummyListenerName = 'dummyListener'
+var dummyRuleName = 'dummyRule'
 
 
 resource frontendPublicIp 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
@@ -23,6 +26,10 @@ resource frontendPublicIp 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   }
 }
 
+resource appgwMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = { 
+  name: appGwMiName
+}
+
 resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' existing = {
   name: vnetName  
 }
@@ -35,15 +42,13 @@ resource appgwSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-07-01' exis
 resource appgw 'Microsoft.Network/applicationGateways@2022-07-01' = {
   name: appgwName
   location: location
-  // SystemAssigned is not supported, UserAssigned TBD
-  // identity: {
-  //   type:'SystemAssigned'
-  // }
-  properties: {
-    autoscaleConfiguration: {
-      minCapacity: 1
-      maxCapacity: 1
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${appgwMi.id}': {}
     }
+  }
+  properties: {
     frontendIPConfigurations: [
       {
         name: publicFrontendIpConfigName
@@ -57,15 +62,15 @@ resource appgw 'Microsoft.Network/applicationGateways@2022-07-01' = {
     ]
     frontendPorts: [
       {
-        name: frontendPortTlsName
+        name: frontendPortName
         properties: {
-          port: frontendPortTlsPort
+          port: frontendPortIpConfigDefaultPort
         }
       }
     ]
     gatewayIPConfigurations: [
       {
-        name: backendVnetConfig
+        name: appGwVnetConfigName
         properties: {
           subnet: {
             id: appgwSubnet.id
@@ -83,17 +88,51 @@ resource appgw 'Microsoft.Network/applicationGateways@2022-07-01' = {
       {
         name: 'dummyHttpSetting'
         properties: {
-          port: frontendPortTlsPort
+          port: dummyBackendPort
           protocol: 'Http'
           cookieBasedAffinity: 'Disabled'
           pickHostNameFromBackendAddress: false
-          requestTimeout: 20
+          requestTimeout: 30
+        }
+      }
+    ]
+    httpListeners: [
+      {
+        name:dummyListenerName
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appgwName, publicFrontendIpConfigName)
+          }
+          protocol: 'Http'
+          frontendPort:{
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appgwName, frontendPortName)
+          }
+        }
+      }
+    ]
+    requestRoutingRules: [
+      {
+        name: dummyRuleName
+        properties: {
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appgwName, 'dummyAddressPool')
+          }
+          backendHttpSettings: {
+            id:resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appgwName, 'dummyHttpSetting')
+          }
+          httpListener: {
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appgwName, dummyListenerName)
+          }
+          priority: 19500
         }
       }
     ]
     sku: {
-      name: 'WAF_v2'
-      tier: 'WAF_v2'
+      capacity: 1
+      name: 'Standard_v2'
+      tier: 'Standard_v2'
     }
   }
 }
+
+output appGwMiName string = appGwMiName

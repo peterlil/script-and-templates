@@ -29,7 +29,10 @@ param sshRSAPublicKey string
 param vnetName string = 'aks-vnet'
 param aksNodeSubnetName string = 'aks-subnet'
 param aksPodCidr string = '10.224.128.0/17'
+param appgwName string = 'aks-appgw'
 // param appgwSubnetCidr string = '10.225.0.0/24'
+param ingressAppGwMiName string = 'ingress-app-gw-identity'
+param aksMiName string = 'aks-identity'
 
 var dockerBridgeCidr = '172.17.0.1/16'
 var dnsServiceIp = '10.0.0.10'
@@ -44,11 +47,22 @@ resource nodeSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-07-01' exist
   parent: vnet
 }
 
+resource ingressAppGwMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
+  name: ingressAppGwMiName
+}
+
+resource aksMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
+  name: aksMiName
+}
+
 resource aks 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
   name: clusterName
   location: location
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${aksMi.id}': {}
+    }
   }
   properties: {
     dnsPrefix: dnsPrefix
@@ -81,16 +95,37 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
       podCidr: aksPodCidr
       serviceCidr: serviceCidr
     }
-    // addonProfiles: {
-    //   ingressApplicationGateway:{
-    //     enabled: true
-    //     config: {
-    //       applicationGatewayName: 'ingress-appgateway'
-    //       subnetPrefix: appgwSubnetCidr
-    //     }
-    //   }
-    // }
+    //nodeResourceGroup: '${resourceGroup().name}-nodes'
+    addonProfiles: {
+      ingressApplicationGateway:{
+        config: {
+          applicationGatewayId: resourceId('Microsoft.Network/applicationGateways', appgwName)
+        }
+        enabled: true
+        identity: {
+          clientId: ingressAppGwMi.properties.clientId
+          objectId: ingressAppGwMi.properties.principalId
+          resourceId: ingressAppGwMi.id
+        }
+      }
+    }
   }
 }
+
+// resource contributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+//   scope: subscription()
+//   name: 'xxx'
+// }
+// //Microsoft.Authorization/roleAssignments@2020-04-01-preview
+// resource aksfix 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   name: guid(resourceGroup().id,'aksfix','Contributor')
+//   scope: resourceGroup()
+//   properties: {
+//     description: 'fixes aks cross resource group principal permissions for agic'
+//     principalId: aks.properties.addonProfiles.ingressApplicationGateway.identity.objectId
+//     principalType: 'ServicePrincipal'
+//     roleDefinitionId: contributorRoleDefinition.id
+//   }
+// }
 
 output controlPlaneFQDN string = aks.properties.fqdn
