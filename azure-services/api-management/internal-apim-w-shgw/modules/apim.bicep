@@ -186,10 +186,6 @@ resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   kind: 'StorageV2'
 }
 
-resource kv 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
-  name: keyVaultName
-}
-
 // API Management
 resource apim 'Microsoft.ApiManagement/service@2021-12-01-preview' = {
   name: apimInstanceName

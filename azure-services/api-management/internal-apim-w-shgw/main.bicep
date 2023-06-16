@@ -68,7 +68,6 @@ module kv 'modules/keyvault.bicep' = {
     location: location
     envName: envName
     objectIdOfUser: objectIdOfUser
-    initRun: initRun
   }
 }
 
