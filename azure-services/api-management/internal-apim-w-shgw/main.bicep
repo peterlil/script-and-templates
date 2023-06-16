@@ -11,6 +11,37 @@ param envName string
 param apimPublisherEmail string
 param apimPublisherName string
 
+// User id for kv permissions
+param objectIdOfUser string
+
+param initRun bool = false
+
+param mgmtCertExpiry string = ''
+param mgmtCertSubject string = ''
+param mgmtCertThumbprint string = ''
+param mgmtCertId string = ''
+
+param devCertExpiry string = ''
+param devCertSubject string = ''
+param devCertThumbprint string = ''
+param devCertId string = ''
+
+param portalCertExpiry string = ''
+param portalCertSubject string = ''
+param portalCertThumbprint string = ''
+param portalCertId string = ''
+
+param proxyCertExpiry string = ''
+param proxyCertSubject string = ''
+param proxyCertThumbprint string = ''
+param proxyCertId string = ''
+
+param scmCertExpiry string = ''
+param scmCertSubject string = ''
+param scmCertThumbprint string = ''
+param scmCertId string = ''
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Resource Group
@@ -20,6 +51,26 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 }
 ///// Resource Group
 ////////////////////////////////////////////////////////////////////////////////
+
+module mi 'modules/managed-identities.bicep' = {
+  scope: resourceGroup(rg.name)
+  name: 'managed-identities'
+  params: {
+    location: location
+    envName: envName
+  }
+}
+
+module kv 'modules/keyvault.bicep' = {
+  scope: resourceGroup(rg.name)
+  name: 'keyvault'
+  params: {
+    location: location
+    envName: envName
+    objectIdOfUser: objectIdOfUser
+    initRun: initRun
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Module: API Management
@@ -31,6 +82,28 @@ module apim 'modules/apim.bicep' = {
     envName: envName
     apimPublisherEmail: apimPublisherEmail
     apimPublisherName: apimPublisherName
+    keyVaultName: kv.outputs.keyVaultName
+    initRun: initRun
+    mgmtCertExpiry: mgmtCertExpiry
+    mgmtCertSubject: mgmtCertSubject
+    mgmtCertThumbprint: mgmtCertThumbprint
+    mgmtCertId: mgmtCertId
+    devCertExpiry: devCertExpiry
+    devCertSubject: devCertSubject
+    devCertThumbprint: devCertThumbprint
+    devCertId: devCertId
+    portalCertExpiry: portalCertExpiry
+    portalCertSubject: portalCertSubject
+    portalCertThumbprint: portalCertThumbprint
+    portalCertId: portalCertId
+    proxyCertExpiry: proxyCertExpiry
+    proxyCertSubject: proxyCertSubject
+    proxyCertThumbprint: proxyCertThumbprint
+    proxyCertId: proxyCertId
+    scmCertExpiry: scmCertExpiry
+    scmCertSubject: scmCertSubject
+    scmCertThumbprint: scmCertThumbprint
+    scmCertId: scmCertId
   }
 }
 ///// Module: API Management
