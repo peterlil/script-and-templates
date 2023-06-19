@@ -176,6 +176,71 @@ resource apimPrivateDnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
   }
 }
 
+resource mgmtARecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+  name: 'mgmt-apim'
+  parent: apimPrivateDns
+  properties: {
+    ttl: 300
+    aRecords: [
+      {
+        ipv4Address: '10.20.0.4'
+      }
+    ]
+  }
+}
+
+resource devARecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+  name: 'dev-apim'
+  parent: apimPrivateDns
+  properties: {
+    ttl: 300
+    aRecords: [
+      {
+        ipv4Address: '10.20.0.4'
+      }
+    ]
+  }
+}
+
+resource portalARecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+  name: 'portal-apim'
+  parent: apimPrivateDns
+  properties: {
+    ttl: 300
+    aRecords: [
+      {
+        ipv4Address: '10.20.0.4'
+      }
+    ]
+  }
+}
+
+resource proxyARecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+  name: 'proxy-apim'
+  parent: apimPrivateDns
+  properties: {
+    ttl: 300
+    aRecords: [
+      {
+        ipv4Address: '10.20.0.4'
+      }
+    ]
+  }
+}
+
+resource scmARecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+  name: 'scm-apim'
+  parent: apimPrivateDns
+  properties: {
+    ttl: 300
+    aRecords: [
+      {
+        ipv4Address: '10.20.0.4'
+      }
+    ]
+  }
+}
+
 // Storage Account for the Developer Portal Static Web App
 resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: saDevPortalName

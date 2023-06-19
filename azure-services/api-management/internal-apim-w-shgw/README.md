@@ -10,6 +10,7 @@ Generate the certificate in WSL.
 # Generate the certificates
 password=''
 envName=''
+
 fqdn=mgmt-apim.$(echo $envName).peterlabs.net
 acme.sh --issue --dns dns_azure -d $fqdn
 acme.sh --toPkcs -d $fqdn --password $password
@@ -163,5 +164,28 @@ $appPatchBody = "{spa:{redirectUris:[$appReplyUrlsString]}}"
 az rest --method PATCH --uri $appPatchUri --headers 'Content-Type=application/json' `
     --body $appPatchBody
 Write-Host "SPA App Updated."
+
+```
+
+
+Create the test vm if needed
+
+```PowerShell
+$location="swedencentral"
+$envName="goofy"
+$resourceGroupName="$envName-poc"
+$vmUsername="peter"
+$vmPassword="NBbu;5{jD1<5.r#voJ%z"
+# Run the initial deployment
+az deployment group create `
+    --name "vm-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
+    -g $resourceGroupName `
+    -f 'vm.bicep' `
+    -p location=$location `
+        envName=$envName `
+        vmUsername=$vmUsername `
+        vmPassword="""$vmPassword"""
+
+
 
 ```

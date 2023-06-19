@@ -41,6 +41,10 @@ param scmCertSubject string = ''
 param scmCertThumbprint string = ''
 param scmCertId string = ''
 
+param vmUsername string = ''
+@secure()
+param vmPassword string = ''
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -107,5 +111,3 @@ module apim 'modules/apim.bicep' = {
 }
 ///// Module: API Management
 ////////////////////////////////////////////////////////////////////////////////
-
-
