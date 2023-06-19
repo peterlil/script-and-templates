@@ -41,12 +41,6 @@ param scmCertSubject string = ''
 param scmCertThumbprint string = ''
 param scmCertId string = ''
 
-param vmUsername string = ''
-@secure()
-param vmPassword string = ''
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 ///// Resource Group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -85,7 +79,6 @@ module apim 'modules/apim.bicep' = {
     envName: envName
     apimPublisherEmail: apimPublisherEmail
     apimPublisherName: apimPublisherName
-    keyVaultName: kv.outputs.keyVaultName
     initRun: initRun
     mgmtCertExpiry: mgmtCertExpiry
     mgmtCertSubject: mgmtCertSubject

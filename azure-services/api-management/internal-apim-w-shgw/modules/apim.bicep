@@ -12,8 +12,6 @@ param vnetPrefixes array = [
 ]
 param apimSubnetPrefix string = '10.20.0.0/24'
 
-param keyVaultName string
-
 param mgmtCertExpiry string
 param mgmtCertSubject string
 param mgmtCertThumbprint string
