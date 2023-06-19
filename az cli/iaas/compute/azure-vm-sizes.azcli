@@ -1,3 +1,10 @@
 # PowerShell
-$location = "Sweden Central"
+$location = "swedencentral"
 az vm list-sizes -l $location --query "[].name" -o tsv
+
+
+az vm image list-publishers --location $location --output table
+az vm image list-offers --location $location --publisher "MicrosoftWindowsDesktop" --output table
+az vm image list-skus --location $location --publisher "MicrosoftWindowsDesktop" --offer "Windows-11" --output table
+az vm image list --location $location --publisher "MicrosoftWindowsDesktop" --offer "Windows-11" --sku "win11-22h2" --all--output table
+
