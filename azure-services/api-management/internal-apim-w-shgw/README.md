@@ -8,8 +8,8 @@ Generate the certificate in WSL.
 #!/bin/bash
 
 # Generate the certificates
-password=''
-envName=''
+password='scAm1()3@WCz5sSKVI82'
+envName='goofy'
 
 fqdn=mgmt-apim.$(echo $envName).peterlabs.net
 acme.sh --issue --dns dns_azure -d $fqdn
@@ -31,6 +31,10 @@ fqdn=scm-apim.$(echo $envName).peterlabs.net
 acme.sh --issue --dns dns_azure -d $fqdn
 acme.sh --toPkcs -d $fqdn --password $password
 
+fqdn=$(echo $envName)-configuration.peterlabs.net
+acme.sh --issue --dns dns_azure -d $fqdn
+acme.sh --toPkcs -d $fqdn --password $password
+
 # copy the certificates to a location where PowerShell can access them
 mkdir /mnt/c/l/temp/pfx
 cp .acme.sh/mgmt-apim.$(echo $envName).peterlabs.net/mgmt-apim.$(echo $envName).peterlabs.net.pfx /mnt/c/l/temp/pfx
@@ -38,6 +42,7 @@ cp .acme.sh/dev-apim.$(echo $envName).peterlabs.net/dev-apim.$(echo $envName).pe
 cp .acme.sh/portal-apim.$(echo $envName).peterlabs.net/portal-apim.$(echo $envName).peterlabs.net.pfx /mnt/c/l/temp/pfx
 cp .acme.sh/proxy-apim.$(echo $envName).peterlabs.net/proxy-apim.$(echo $envName).peterlabs.net.pfx /mnt/c/l/temp/pfx
 cp .acme.sh/scm-apim.$(echo $envName).peterlabs.net/scm-apim.$(echo $envName).peterlabs.net.pfx /mnt/c/l/temp/pfx
+cp .acme.sh/$(echo $envName)-configuration.peterlabs.net/$(echo $envName)-configuration.peterlabs.net.pfx /mnt/c/l/temp/pfx
 ```
 
 Create the API Management instance from PowerShell.
@@ -68,6 +73,13 @@ az deployment sub create `
         objectIdOfUser=$objectIdOfUser `
         initRun=$secondRun
 
+# Deploy the private dns
+az deployment group create `
+    --name "dns-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
+    -g $resourceGroupName `
+    -f 'modules\private-dns-zones.bicep' `
+    -p envName=$envName
+
 if($secondRun) {
     # the key vault exists now, upload the certificates
     $kv = az keyvault list -g $resourceGroupName --query "[].name" -o tsv
@@ -76,6 +88,7 @@ if($secondRun) {
     $certPortal = az keyvault certificate import --file "\l\temp\pfx\portal-apim.$envName.peterlabs.net.pfx" --name "portal-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
     $certProxy = az keyvault certificate import --file "\l\temp\pfx\proxy-apim.$envName.peterlabs.net.pfx" --name "proxy-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
     $certScm = az keyvault certificate import --file "\l\temp\pfx\scm-apim.$envName.peterlabs.net.pfx" --name "scm-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
+    $certAppGwListener = az keyvault certificate import --file "\l\temp\pfx\$envName-configuration.peterlabs.net.pfx" --name "$envName-configuration" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
 
     $mgmtCertExpiry=(Get-Date $certMgmt.attributes.expires.ToUniversalTime() -Format "o") 
     $mgmtCertSubject=$certMgmt.policy.x509CertificateProperties.subject 
@@ -96,7 +109,11 @@ if($secondRun) {
     $scmCertExpiry=(Get-Date $certScm.attributes.expires.ToUniversalTime() -Format "o") 
     $scmCertSubject=$certScm.policy.x509CertificateProperties.subject 
     $scmCertThumbprint=$certScm.x509Thumbprint
-    $scmCertId=$certScm.sid 
+    $scmCertId=$certScm.sid
+    $appGwListenerCertExpiry=(Get-Date $certAppGwListener.attributes.expires.ToUniversalTime() -Format "o") 
+    $appGwListenerCertSubject=$certAppGwListener.policy.x509CertificateProperties.subject 
+    $appGwListenerCertThumbprint=$certAppGwListener.x509Thumbprint
+    $appGwListenerCertId=$certAppGwListener.sid 
     
 
 $paramString = @"
@@ -144,6 +161,47 @@ $paramString = @"
         -p "\l\temp\tempparams.json"
 }
 ```
+
+Create the Application Gateway
+```PowerShell
+# First run, create the appgw. 
+
+$paramString = @"
+{
+    "`$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": { "value": "$location" },
+        "envName": { "value": "$envName" },
+        "configEndpointCertificateSecretId": { "value": "$appGwListenerCertId" }
+    }
+}
+"@ | Out-File -FilePath "\l\temp\tempparams-appgw.json"
+
+az deployment group create `
+    --name "appgw1-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
+    -g $resourceGroupName `
+    -f 'modules\appgw.bicep' `
+    -p "\l\temp\tempparams-appgw.json"
+
+# Second run, configure the appgw
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Create an Azure AD App Registration for the Developer Portal
 ```PowerShell

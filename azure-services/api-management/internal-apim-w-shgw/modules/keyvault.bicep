@@ -4,9 +4,12 @@ param objectIdOfUser string
 
 var skuName = 'standard'
 
-resource apimMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = { 
+resource apimMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = { 
   name: '${envName}-apim-identity'
-  location: location
+}
+
+resource appGwMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = { 
+  name: '${envName}-appgw-identity'
 }
 
 resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
@@ -44,6 +47,21 @@ resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
       }
       {
         objectId: apimMi.properties.principalId
+        tenantId: subscription().tenantId
+        permissions: {
+          secrets:[
+            'get'
+          ]
+          certificates: [
+            'get'
+            'getissuers'
+            'list'
+            'listissuers'
+          ]
+        }
+      }
+      {
+        objectId: appGwMi.properties.principalId
         tenantId: subscription().tenantId
         permissions: {
           secrets:[

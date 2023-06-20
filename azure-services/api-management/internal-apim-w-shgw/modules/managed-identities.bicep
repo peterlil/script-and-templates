@@ -6,3 +6,7 @@ resource apimMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-pre
   location: location
 }
 
+resource appGwMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = { 
+  name: '${envName}-appgw-identity'
+  location: location
+}
