@@ -180,6 +180,52 @@ az deployment group create `
     -p "\l\temp\tempparams-appgw.json"
 ```
 
+Create the AKS cluster for the self-hosted gw
+```PowerShell
+$clusterName="$envName-aks-cluster"
+$clusterAdminName="vmhero"
+$publicKey=cat ~\.ssh\id_rsa__vmhero.pub
+$subscriptionId=az account show --query id -o tsv
+
+$aksIdentity=az identity show --name "$envName-aks-identity" --resource-group $resourceGroupName | ConvertFrom-Json
+
+# Add role assignment for control plane identity
+az role assignment create `
+    --role Contributor `
+    --scope /subscriptions/$subscriptionId/resourceGroups/$resourceGroupName `
+    --assignee $aksIdentity.principalId
+
+# Create the aks cluster
+az deployment group create `
+    -g $resourceGroupName `
+    -n "aks-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
+    -f 'aks-main.bicep' `
+    -p location=$location `
+        envName=$envName `
+        clusterAdminName=$clusterAdminName `
+        sshRSAPublicKey="$publicKey"
+```
+
+Connect to the cluster and deploy SHGW
+```PowerShell
+az aks get-credentials --resource-group $resourceGroupName --name $clusterName --overwrite-existing
+
+kubectl get nodes
+kubectl get pods
+
+```
+
+
+
+```
+# Helper
+az deployment group create `
+    --name "mi-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
+    -g $resourceGroupName `
+    -f 'modules\managed-identities.bicep' `
+    -p envName=$envName location=$location
+
+```
 
 
 

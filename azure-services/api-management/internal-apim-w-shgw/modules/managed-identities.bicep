@@ -10,3 +10,8 @@ resource appGwMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-pr
   name: '${envName}-appgw-identity'
   location: location
 }
+
+resource aksMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = { 
+  name: '${envName}-aks-identity'
+  location: location
+}
