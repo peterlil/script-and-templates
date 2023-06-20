@@ -151,9 +151,6 @@ $paramString = @"
 }
 "@ | Out-File -FilePath "\l\temp\tempparams.json"
 
-    
-
-
     az deployment sub create `
         --location 'swedencentral' `
         --name "full-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
@@ -164,8 +161,6 @@ $paramString = @"
 
 Create the Application Gateway
 ```PowerShell
-# First run, create the appgw. 
-
 $paramString = @"
 {
     "`$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
@@ -183,8 +178,6 @@ az deployment group create `
     -g $resourceGroupName `
     -f 'modules\appgw.bicep' `
     -p "\l\temp\tempparams-appgw.json"
-
-# Second run, configure the appgw
 ```
 
 
