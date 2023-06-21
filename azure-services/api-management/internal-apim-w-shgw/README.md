@@ -238,7 +238,7 @@ az account set --name $sub1Name
 az aks get-credentials --resource-group $resourceGroupName --name $clusterName --overwrite-existing
 ```
 
-### Create the kubectl context if it does not exists
+### Create the shgw context in kube config if it does not exists
 ```PowerShell
 $originalContextName=$clusterName
 $shgwNamespace="shgw"
@@ -258,7 +258,7 @@ kubectl config set-context $shgwContext --namespace=$shgwNamespace --cluster=$or
 kubectl config use-context $shgwContext
 ```
 
-### Create the Azure API Management Gateway if it does not exist
+### Create the Azure API Management Self-hosted gateway configuration if it does not exist
 ```PowerShell
 # Add the gateway Azure resource if it does not exists
 $uri="https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$resourceGroupName/providers/Microsoft.ApiManagement/service/$envName-apim/gateways/$envName-gateway?api-version=2020-12-01"
@@ -275,7 +275,7 @@ $body = $body -replace "`"", "\`""
 az rest --method put --uri "$uri" --body $body --verbose
 ```
 
-### Get the token and create the K8s secret to call the gateway
+### Get the gateway token and create the K8s secret to use when gateway fetches config
 ```PowerShell
 # Get the token for shgw to call back to APIM
 $uri="https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$resourceGroupName/providers/Microsoft.ApiManagement/service/$envName-apim/gateways/$envName-gateway/generateToken?api-version=2021-04-01-preview"
@@ -292,7 +292,7 @@ $token=az rest --method 'post' --uri "$uri" --body "$body" --output tsv --verbos
 kubectl create secret generic "$envName-gateway-token" --from-literal=value="GatewayKey $token" --namespace="$shgwNamespace" --type=Opaque --dry-run=client --save-config -o yaml | kubectl apply --namespace="$shgwNamespace" -f -
 ```
 
-### Deploy the Selfhosted Gateway pod
+### Deploy the self-hosted gateway pod
 ```PowerShell
 # NOTE: Replace the path to one that works in your environment
 $tempYmlFilename = ""
@@ -310,7 +310,7 @@ kubectl delete secret $envName-gateway-token
 ```
 
 
-### Create the test vm in the vnet if needed for troubleshooting
+### _Optional_ Create the test vm in the vnet if needed for troubleshooting
 
 ```PowerShell
 $location="swedencentral"
