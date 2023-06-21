@@ -310,7 +310,7 @@ kubectl delete secret $envName-gateway-token
 ```
 
 
-### _Optional_ Create the test vm in the vnet if needed for troubleshooting
+### _[Optional]_ Create the test vm in the vnet if needed for troubleshooting
 
 ```PowerShell
 $location="swedencentral"
