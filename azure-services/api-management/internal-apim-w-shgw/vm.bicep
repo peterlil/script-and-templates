@@ -7,7 +7,7 @@ param vmUsername string
 param vmPassword string
 
 resource apimSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
-  name: 'goofy-vnet/apim-subnet'
+  name: '${envName}-vnet/apim-subnet'
 }
 
 resource vmPublicIp 'Microsoft.Network/publicIPAddresses@2021-02-01' = {

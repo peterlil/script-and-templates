@@ -3,6 +3,7 @@ param envName string
 @secure()
 param configEndpointCertificateSecretId string
 
+
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
   name: '${envName}-vnet'
 }
@@ -97,6 +98,9 @@ resource appGw 'Microsoft.Network/applicationGateways@2021-02-01' = {
           cookieBasedAffinity: 'Disabled'
           hostName: '${envName}-apim.configuration.azure-api.net'
           requestTimeout: 20
+          probe: {
+            id: resourceId('Microsoft.Network/applicationGateways/probes', '${envName}-appgw', '${envName}-config-probe')
+          }
         }
       }
     ]
@@ -141,6 +145,27 @@ resource appGw 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
           backendHttpSettings: {
             id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', '${envName}-appgw', '${envName}-backend-http-settings')
+          }
+        }
+      }
+    ]
+    probes: [
+      {
+        name: '${envName}-config-probe'
+        properties: {
+          protocol: 'Https'
+          host: '${envName}-apim.azure-api.net'
+          path: '/status-0123456789abcdef'
+          interval: 30
+          timeout: 30
+          unhealthyThreshold: 3
+          pickHostNameFromBackendHttpSettings: false
+          minServers: 0
+          match: {
+            body: ''
+            statusCodes: [
+              '200-399'
+            ]
           }
         }
       }

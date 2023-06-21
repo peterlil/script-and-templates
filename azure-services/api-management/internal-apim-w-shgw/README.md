@@ -1,16 +1,24 @@
-# Deployment commands for bicep files in this folder
+# Deploy an internal API Management solution and Self-hosted gateway in AKS, using the v2 configuration
 
-## API Managagement Developer instance
+This article explains how to deploy an Azure API Management instance into a virtual network in internal mode with custom domains and how to expose the configuration endpoint to a self-hosted gateway deployed somewhere else. It is not as easy as it seems as the configuration endpoint does not support custom domains like the other endpoints does. 
 
-Generate the certificate in WSL.
+There might be more solutions to this problem, but in this article I outline one solution.
 
+## Start by generating certificates for the domain names
+
+I develop on a Windows machine, and use [WSLv2](https://learn.microsoft.com/en-us/windows/wsl/install), [Let's Encrypt](https://letsencrypt.org/), [acme.sh](https://github.com/acmesh-official/acme.sh) and [Azure DNS](https://learn.microsoft.com/en-us/azure/dns/) to generate the certificates for this proof of concept.
+
+### Generate the certificates in WSL
 ```bash
-#!/bin/bash
+# Fill in the password you want to use to protect the pfx files.
+password=''
+# Enter the name of the environment you will create. This name will be a part of domain names and resource names
+envName=''
+# the path to the windows folder where you want the pfx files to land (e.g. /mnt/c/...)
+# the last part of the path is created if it does not exists
+windowsPath=''
 
 # Generate the certificates
-password='scAm1()3@WCz5sSKVI82'
-envName='goofy'
-
 fqdn=mgmt-apim.$(echo $envName).peterlabs.net
 acme.sh --issue --dns dns_azure -d $fqdn
 acme.sh --toPkcs -d $fqdn --password $password
@@ -31,102 +39,135 @@ fqdn=scm-apim.$(echo $envName).peterlabs.net
 acme.sh --issue --dns dns_azure -d $fqdn
 acme.sh --toPkcs -d $fqdn --password $password
 
+fqdn=config-apim.$(echo $envName).peterlabs.net
+acme.sh --issue --dns dns_azure -d $fqdn
+acme.sh --toPkcs -d $fqdn --password $password
+
 fqdn=$(echo $envName)-configuration.peterlabs.net
 acme.sh --issue --dns dns_azure -d $fqdn
 acme.sh --toPkcs -d $fqdn --password $password
 
-# copy the certificates to a location where PowerShell can access them
-mkdir /mnt/c/l/temp/pfx
-cp .acme.sh/mgmt-apim.$(echo $envName).peterlabs.net/mgmt-apim.$(echo $envName).peterlabs.net.pfx /mnt/c/l/temp/pfx
-cp .acme.sh/dev-apim.$(echo $envName).peterlabs.net/dev-apim.$(echo $envName).peterlabs.net.pfx /mnt/c/l/temp/pfx
-cp .acme.sh/portal-apim.$(echo $envName).peterlabs.net/portal-apim.$(echo $envName).peterlabs.net.pfx /mnt/c/l/temp/pfx
-cp .acme.sh/proxy-apim.$(echo $envName).peterlabs.net/proxy-apim.$(echo $envName).peterlabs.net.pfx /mnt/c/l/temp/pfx
-cp .acme.sh/scm-apim.$(echo $envName).peterlabs.net/scm-apim.$(echo $envName).peterlabs.net.pfx /mnt/c/l/temp/pfx
-cp .acme.sh/$(echo $envName)-configuration.peterlabs.net/$(echo $envName)-configuration.peterlabs.net.pfx /mnt/c/l/temp/pfx
+# copy the certificates to a location in Windows where PowerShell can access them.
+cd ~
+mkdir $windowsPath
+cp .acme.sh/mgmt-apim.$(echo $envName).peterlabs.net/mgmt-apim.$(echo $envName).peterlabs.net.pfx $windowsPath
+cp .acme.sh/dev-apim.$(echo $envName).peterlabs.net/dev-apim.$(echo $envName).peterlabs.net.pfx $windowsPath
+cp .acme.sh/portal-apim.$(echo $envName).peterlabs.net/portal-apim.$(echo $envName).peterlabs.net.pfx $windowsPath
+cp .acme.sh/proxy-apim.$(echo $envName).peterlabs.net/proxy-apim.$(echo $envName).peterlabs.net.pfx $windowsPath
+cp .acme.sh/scm-apim.$(echo $envName).peterlabs.net/scm-apim.$(echo $envName).peterlabs.net.pfx $windowsPath
+cp .acme.sh/config-apim.$(echo $envName).peterlabs.net/config-apim.$(echo $envName).peterlabs.net.pfx $windowsPath
+cp .acme.sh/$(echo $envName)-configuration.peterlabs.net/$(echo $envName)-configuration.peterlabs.net.pfx $windowsPath
 ```
 
-Create the API Management instance from PowerShell.
+### Log in to Azure with PowerShell
+```PowerShell
+# Log in to Azure
+az login
+# Make sure you are in the right subscription
+az account show
+# If not, change and run the commented command below
+# az account set -n <subscriptionname>
+```
+
+### Deploy foundational services for APIM with PowerShell and Bicep
 
 ```PowerShell
+# NOTE: Set/change the variables used in scripts below
 $pfxPassword=""
 $location="swedencentral"
-$envName="goofy"
+$envName=""
 $resourceGroupName="$envName-poc"
 $apimPublisherName="Jane Doe"
-$apimPublisherEmail="jd@anon.dev"
+$apimPublisherEmail="noreply@microsoft.com"
+$clusterName="$envName-aks-cluster"
+$clusterAdminName=""
+$apimPrivateIp="10.20.0.4"
+
 $objectIdOfUser=(az ad signed-in-user show --query id -o tsv)
+$publicKey=cat ~\.ssh\id_rsa.pub
+$subscriptionId=az account show --query id -o tsv
 
-# Get the name of the key vault if it exists. If the key vault does not exists, some extra work needs to be done after first deployment.
-$kv = az keyvault list -g $resourceGroupName --query "[].name" -o tsv
-if(!$kv) { $secondRun=$true } else { $secondRun=$false }
+$cd = Get-Location
+if ( $cd.Path.EndsWith("\internal-apim-w-shgw") -eq $false ) {
+    # Assume current direactory is repo root, change to internal-apim-w-shgw 
+    Set-Location "azure-services\api-management\internal-apim-w-shgw"
+}
 
-# Run the initial deployment
 az deployment sub create `
-    --location 'swedencentral' `
-    --name "full-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
-    -f 'main.bicep' `
+    --location $location `
+    --name "main-pre-$(Get-Date -Format 'yyyyMMddThhmm')" `
+    -f 'main-pre.bicep' `
     -p location=$location `
         resourceGroupName=$resourceGroupName `
         envName=$envName `
-        apimPublisherEmail=$apimPublisherEmail `
-        apimPublisherName=$apimPublisherName `
         objectIdOfUser=$objectIdOfUser `
-        initRun=$secondRun
+        apimPrivateIp=$apimPrivateIp
+```
 
-# Deploy the private dns
-az deployment group create `
-    --name "dns-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
-    -g $resourceGroupName `
-    -f 'modules\private-dns-zones.bicep' `
-    -p envName=$envName
+### Deploy API Managagement Developer instance with PowerShell and Bicep
 
-if($secondRun) {
-    # the key vault exists now, upload the certificates
-    $kv = az keyvault list -g $resourceGroupName --query "[].name" -o tsv
-    $certMgmt = az keyvault certificate import --file "\l\temp\pfx\mgmt-apim.$envName.peterlabs.net.pfx" --name "mgmt-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
-    $certDev = az keyvault certificate import --file "\l\temp\pfx\dev-apim.$envName.peterlabs.net.pfx" --name "dev-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
-    $certPortal = az keyvault certificate import --file "\l\temp\pfx\portal-apim.$envName.peterlabs.net.pfx" --name "portal-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
-    $certProxy = az keyvault certificate import --file "\l\temp\pfx\proxy-apim.$envName.peterlabs.net.pfx" --name "proxy-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
-    $certScm = az keyvault certificate import --file "\l\temp\pfx\scm-apim.$envName.peterlabs.net.pfx" --name "scm-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
-    $certAppGwListener = az keyvault certificate import --file "\l\temp\pfx\$envName-configuration.peterlabs.net.pfx" --name "$envName-configuration" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
+```PowerShell
+# NOTE: Change to something that works in your environment
+$tempFolder = ""
 
-    $mgmtCertExpiry=(Get-Date $certMgmt.attributes.expires.ToUniversalTime() -Format "o") 
-    $mgmtCertSubject=$certMgmt.policy.x509CertificateProperties.subject 
-    $mgmtCertThumbprint=$certMgmt.x509Thumbprint
-    $mgmtCertId=$certMgmt.sid
-    $devCertExpiry=(Get-Date $certDev.attributes.expires.ToUniversalTime() -Format "o") 
-    $devCertSubject=$certDev.policy.x509CertificateProperties.subject 
-    $devCertThumbprint=$certDev.x509Thumbprint
-    $devCertId=$certDev.sid 
-    $portalCertExpiry=(Get-Date $certPortal.attributes.expires.ToUniversalTime() -Format "o") 
-    $portalCertSubject=$certPortal.policy.x509CertificateProperties.subject 
-    $portalCertThumbprint=$certPortal.x509Thumbprint 
-    $portalCertId=$certPortal.sid 
-    $proxyCertExpiry=(Get-Date $certProxy.attributes.expires.ToUniversalTime() -Format "o") 
-    $proxyCertSubject=$certProxy.policy.x509CertificateProperties.subject 
-    $proxyCertThumbprint=$certProxy.x509Thumbprint 
-    $proxyCertId=$certProxy.sid 
-    $scmCertExpiry=(Get-Date $certScm.attributes.expires.ToUniversalTime() -Format "o") 
-    $scmCertSubject=$certScm.policy.x509CertificateProperties.subject 
-    $scmCertThumbprint=$certScm.x509Thumbprint
-    $scmCertId=$certScm.sid
-    $appGwListenerCertExpiry=(Get-Date $certAppGwListener.attributes.expires.ToUniversalTime() -Format "o") 
-    $appGwListenerCertSubject=$certAppGwListener.policy.x509CertificateProperties.subject 
-    $appGwListenerCertThumbprint=$certAppGwListener.x509Thumbprint
-    $appGwListenerCertId=$certAppGwListener.sid 
-    
+# Get the name of the key vault
+$kv = az keyvault list -g $resourceGroupName --query "[].name" -o tsv
+# Import the certificates to key vault and store the properties of the certificates in variables.
+$certMgmt = az keyvault certificate import --file "\l\temp\pfx\mgmt-apim.$envName.peterlabs.net.pfx" --name "mgmt-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
+$certDev = az keyvault certificate import --file "\l\temp\pfx\dev-apim.$envName.peterlabs.net.pfx" --name "dev-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
+$certPortal = az keyvault certificate import --file "\l\temp\pfx\portal-apim.$envName.peterlabs.net.pfx" --name "portal-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
+$certProxy = az keyvault certificate import --file "\l\temp\pfx\proxy-apim.$envName.peterlabs.net.pfx" --name "proxy-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
+$certScm = az keyvault certificate import --file "\l\temp\pfx\scm-apim.$envName.peterlabs.net.pfx" --name "scm-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
+$certConfig = az keyvault certificate import --file "\l\temp\pfx\config-apim.$envName.peterlabs.net.pfx" --name "config-apim" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
+$certAppGwListener = az keyvault certificate import --file "\l\temp\pfx\$envName-configuration.peterlabs.net.pfx" --name "$envName-configuration" --vault-name $kv --password """$pfxPassword""" | ConvertFrom-Json
 
+# Copy the certificate values for later use
+$mgmtCertExpiry=(Get-Date $certMgmt.attributes.expires.ToUniversalTime() -Format "o") 
+$mgmtCertSubject=$certMgmt.policy.x509CertificateProperties.subject 
+$mgmtCertThumbprint=$certMgmt.x509Thumbprint
+$mgmtCertId=$certMgmt.sid
+$devCertExpiry=(Get-Date $certDev.attributes.expires.ToUniversalTime() -Format "o") 
+$devCertSubject=$certDev.policy.x509CertificateProperties.subject 
+$devCertThumbprint=$certDev.x509Thumbprint
+$devCertId=$certDev.sid 
+$portalCertExpiry=(Get-Date $certPortal.attributes.expires.ToUniversalTime() -Format "o") 
+$portalCertSubject=$certPortal.policy.x509CertificateProperties.subject 
+$portalCertThumbprint=$certPortal.x509Thumbprint 
+$portalCertId=$certPortal.sid 
+$proxyCertExpiry=(Get-Date $certProxy.attributes.expires.ToUniversalTime() -Format "o") 
+$proxyCertSubject=$certProxy.policy.x509CertificateProperties.subject 
+$proxyCertThumbprint=$certProxy.x509Thumbprint 
+$proxyCertId=$certProxy.sid 
+$scmCertExpiry=(Get-Date $certScm.attributes.expires.ToUniversalTime() -Format "o") 
+$scmCertSubject=$certScm.policy.x509CertificateProperties.subject 
+$scmCertThumbprint=$certScm.x509Thumbprint
+$scmCertId=$certScm.sid
+$configCertExpiry=(Get-Date $certconfig.attributes.expires.ToUniversalTime() -Format "o") 
+$configCertSubject=$certconfig.policy.x509CertificateProperties.subject 
+$configCertThumbprint=$certconfig.x509Thumbprint
+$configCertId=$certconfig.sid
+$appGwListenerCertExpiry=(Get-Date $certAppGwListener.attributes.expires.ToUniversalTime() -Format "o") 
+$appGwListenerCertSubject=$certAppGwListener.policy.x509CertificateProperties.subject 
+$appGwListenerCertThumbprint=$certAppGwListener.x509Thumbprint
+$appGwListenerCertId=$certAppGwListener.sid
+
+# Add role assignment for control plane identity
+$aksIdentity=az identity show --name "$envName-aks-identity" --resource-group $resourceGroupName | ConvertFrom-Json
+az role assignment create `
+    --role Contributor `
+    --scope /subscriptions/$subscriptionId/resourceGroups/$resourceGroupName `
+    --assignee $aksIdentity.principalId
+
+# Generate a parameter file as command line with all these parameters becomes too long.
 $paramString = @"
 {
     "`$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": { "value": "$location" },
-        "resourceGroupName": { "value": "$resourceGroupName" },
         "envName": { "value": "$envName" },
         "apimPublisherEmail": { "value": "$apimPublisherEmail" },
         "apimPublisherName": { "value": "$apimPublisherName" },
-        "objectIdOfUser": { "value": "$objectIdOfUser" },
         "mgmtCertExpiry": { "value": "$mgmtCertExpiry" },
         "mgmtCertSubject": { "value": "$mgmtCertSubject" },
         "mgmtCertThumbprint": { "value": "$mgmtCertThumbprint" },
@@ -146,133 +187,137 @@ $paramString = @"
         "scmCertExpiry": { "value": "$scmCertExpiry" },
         "scmCertSubject": { "value": "$scmCertSubject" },
         "scmCertThumbprint": { "value": "$scmCertThumbprint" },
-        "scmCertId": { "value": "$scmCertId" }
+        "scmCertId": { "value": "$scmCertId" },
+        "configCertExpiry": { "value": "$configCertExpiry" },
+        "configCertSubject": { "value": "$configCertSubject" },
+        "configCertThumbprint": { "value": "$configCertThumbprint" },
+        "configCertId": { "value": "$configCertId" },
+        "configEndpointCertificateSecretId": { "value": "$appGwListenerCertId" },
+        "clusterAdminName": { "value": "$clusterAdminName" },
+        "sshRSAPublicKey": { "value": "$publicKey" }
     }
 }
-"@ | Out-File -FilePath "\l\temp\tempparams.json"
-
-    az deployment sub create `
-        --location 'swedencentral' `
-        --name "full-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
-        -f 'main.bicep' `
-        -p "\l\temp\tempparams.json"
-}
-```
-
-Create the Application Gateway
-```PowerShell
-$paramString = @"
-{
-    "`$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "location": { "value": "$location" },
-        "envName": { "value": "$envName" },
-        "configEndpointCertificateSecretId": { "value": "$appGwListenerCertId" }
-    }
-}
-"@ | Out-File -FilePath "\l\temp\tempparams-appgw.json"
+"@ | Out-File -FilePath "\l\temp\tempparams-main.json"
 
 az deployment group create `
-    --name "appgw1-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
+    --name "main-$(Get-Date -Format 'yyyyMMddThhmm')" `
     -g $resourceGroupName `
-    -f 'modules\appgw.bicep' `
-    -p "\l\temp\tempparams-appgw.json"
+    -f 'main.bicep' `
+    -p "$tempFolder\tempparams-main.json"
 ```
 
-Create the AKS cluster for the self-hosted gw
+### Set the A-records in the public DNS to the public ip of App GW
+
+I manage `peterlabs.net` in another subscription, so I need to switch.
+
 ```PowerShell
-$clusterName="$envName-aks-cluster"
-$clusterAdminName="vmhero"
-$publicKey=cat ~\.ssh\id_rsa__vmhero.pub
-$subscriptionId=az account show --query id -o tsv
+# NOTE: Change subscription if you need to. If you are using the same subscription, either put the same subscription name in both variables or skip that part of the code
+$sub1Name="" # Subscription name for the APIM instance you are configuring
+$sub2Name="" # Subscription name for the public DNS zone you are using
+$dnsResourceGroupName="" # Resource group name for the group the DNS zone is in
 
-$aksIdentity=az identity show --name "$envName-aks-identity" --resource-group $resourceGroupName | ConvertFrom-Json
+$appgwPublicIp = az network public-ip show -g $resourceGroupName -n "$envName-appgw-pip" | ConvertFrom-Json
 
-# Add role assignment for control plane identity
-az role assignment create `
-    --role Contributor `
-    --scope /subscriptions/$subscriptionId/resourceGroups/$resourceGroupName `
-    --assignee $aksIdentity.principalId
+az account set --name $sub2Name
 
-# Create the aks cluster
+# Add the A record in the public DNS. 
+# NOTE: You need to change to a domain that you own. I.e. you need to change the information in public-dns.bicep.
 az deployment group create `
-    -g $resourceGroupName `
-    -n "aks-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
-    -f 'aks-main.bicep' `
-    -p location=$location `
-        envName=$envName `
-        clusterAdminName=$clusterAdminName `
-        sshRSAPublicKey="$publicKey"
+    --name "peterlabs-$(Get-Date -Format 'yyyyMMddThhmm')" `
+    -g $dnsResourceGroupName `
+    -f 'public-dns.bicep' `
+    -p envName="$envName" appGwPublicIp="$($appgwPublicIp.ipAddress)"
+
+# Reset the subscription to where we are configuring APIM
+az account set --name $sub1Name
 ```
 
-Connect to the cluster and deploy SHGW
+### Connect to the cluster
+
 ```PowerShell
 az aks get-credentials --resource-group $resourceGroupName --name $clusterName --overwrite-existing
-
-kubectl get nodes
-kubectl get pods
-
 ```
 
-
-
-```
-# Helper
-az deployment group create `
-    --name "mi-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `
-    -g $resourceGroupName `
-    -f 'modules\managed-identities.bicep' `
-    -p envName=$envName location=$location
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Create an Azure AD App Registration for the Developer Portal
+### Create the kubectl context if it does not exists
 ```PowerShell
-$appName="$envName-apim-poc-appreg"
-$appHomepage="https://$envName-apim-poc.developer.azure-api.net/"
-$appReplyUrls=@("https://$envName-apim-poc.developer.azure-api.net/signin", 
-                "https://$envName-apim-poc.developer.azure-api.net/aad-signin")
+$originalContextName=$clusterName
+$shgwNamespace="shgw"
+$shgwContext="$shgwNamespace-context"
 
-$app = az ad app create --display-name $appName `
-    --web-home-page-url $appHomepage | ConvertFrom-Json
-Write-Host "SPA App $($app.appId) Created."
+kubectl config use-context $originalContextName
 
-Write-Host "SPA App Updating.."
-# there is no CLI support to add reply urls to a SPA, so we have to patch manually via az rest
-$appPatchUri = "https://graph.microsoft.com/v1.0/applications/{0}" -f $app.objectId
-$appReplyUrlsString = "'{0}'" -f ($appReplyUrls -join "','")
-$appPatchBody = "{spa:{redirectUris:[$appReplyUrlsString]}}"
-az rest --method PATCH --uri $appPatchUri --headers 'Content-Type=application/json' `
-    --body $appPatchBody
-Write-Host "SPA App Updated."
+$foundNamespace=kubectl get namespaces | Select-String -Pattern $shgwNamespace
+if($foundNamespace) {
+    'Namespace already exists'
+} else {
+    'Creating namespace'
+    kubectl create namespace $shgwNamespace
+}
 
+kubectl config set-context $shgwContext --namespace=$shgwNamespace --cluster=$originalContextName --user="clusterUser_$($resourceGroupName)_$originalContextName"
+kubectl config use-context $shgwContext
+```
+
+### Create the Azure API Management Gateway if it does not exist
+```PowerShell
+# Add the gateway Azure resource if it does not exists
+$uri="https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$resourceGroupName/providers/Microsoft.ApiManagement/service/$envName-apim/gateways/$envName-gateway?api-version=2020-12-01"
+$bodyObject = [PSCustomObject]@{
+    properties = [PSCustomObject]@{
+        description = "$envName-gateway"
+        locationData = [PSCustomObject]@{
+            name = "$envName-gateway"
+        }
+    }
+}
+$body=$bodyObject | ConvertTo-Json -Compress
+$body = $body -replace "`"", "\`""
+az rest --method put --uri "$uri" --body $body --verbose
+```
+
+### Get the token and create the K8s secret to call the gateway
+```PowerShell
+# Get the token for shgw to call back to APIM
+$uri="https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$resourceGroupName/providers/Microsoft.ApiManagement/service/$envName-apim/gateways/$envName-gateway/generateToken?api-version=2021-04-01-preview"
+$date=((Get-date).AddDays(29) | Get-Date -Format o)
+$bodyObject = [PSCustomObject]@{
+    keytype = "primary"
+    expiry = "$date"
+}
+$body=$bodyObject | ConvertTo-Json -Compress
+$body = $body -replace "`"", "\`""
+$token=az rest --method 'post' --uri "$uri" --body "$body" --output tsv --verbose
+
+# Create an AKS secret for the token
+kubectl create secret generic "$envName-gateway-token" --from-literal=value="GatewayKey $token" --namespace="$shgwNamespace" --type=Opaque --dry-run=client --save-config -o yaml | kubectl apply --namespace="$shgwNamespace" -f -
+```
+
+### Deploy the Selfhosted Gateway pod
+```PowerShell
+# NOTE: Replace the path to one that works in your environment
+$tempYmlFilename = ""
+(Get-Content "aks-deployments\shgw-yml-template.txt").Replace("#envName#", $envName) | Set-Content $tempYmlFilename
+kubectl apply -f $tempYmlFilename
+```
+
+### Check if it works
+```PowerShell
+kubectl get pods
+kubectl logs <pod>
+kubectl delete deployment $envName-gateway
+kubectl delete configmap $envName-gateway-env
+kubectl delete secret $envName-gateway-token
 ```
 
 
-Create the test vm if needed
+### Create the test vm in the vnet if needed for troubleshooting
 
 ```PowerShell
 $location="swedencentral"
-$envName="goofy"
+$envName=""
 $resourceGroupName="$envName-poc"
-$vmUsername="peter"
-$vmPassword="NBbu;5{jD1<5.r#voJ%z"
+$vmUsername=""
+$vmPassword=""
 # Run the initial deployment
 az deployment group create `
     --name "vm-deployment-$(Get-Date -Format 'yyyyMMddThhmm')" `

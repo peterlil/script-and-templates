@@ -1,85 +1,57 @@
-targetScope = 'subscription'
-
-// Resource group
 param location string
-param resourceGroupName string
-
-// Solution wide
 param envName string
 
 // API Management
 param apimPublisherEmail string
 param apimPublisherName string
 
-// User id for kv permissions
-param objectIdOfUser string
+param mgmtCertExpiry string
+param mgmtCertSubject string
+param mgmtCertThumbprint string
+param mgmtCertId string
 
-param initRun bool = false
+param devCertExpiry string
+param devCertSubject string
+param devCertThumbprint string
+param devCertId string
 
-param mgmtCertExpiry string = ''
-param mgmtCertSubject string = ''
-param mgmtCertThumbprint string = ''
-param mgmtCertId string = ''
+param portalCertExpiry string
+param portalCertSubject string
+param portalCertThumbprint string
+param portalCertId string
 
-param devCertExpiry string = ''
-param devCertSubject string = ''
-param devCertThumbprint string = ''
-param devCertId string = ''
+param proxyCertExpiry string
+param proxyCertSubject string
+param proxyCertThumbprint string
+param proxyCertId string
 
-param portalCertExpiry string = ''
-param portalCertSubject string = ''
-param portalCertThumbprint string = ''
-param portalCertId string = ''
+param scmCertExpiry string
+param scmCertSubject string
+param scmCertThumbprint string
+param scmCertId string
 
-param proxyCertExpiry string = ''
-param proxyCertSubject string = ''
-param proxyCertThumbprint string = ''
-param proxyCertId string = ''
+param configCertExpiry string
+param configCertSubject string
+param configCertThumbprint string
+param configCertId string
 
-param scmCertExpiry string = ''
-param scmCertSubject string = ''
-param scmCertThumbprint string = ''
-param scmCertId string = ''
+@secure()
+param configEndpointCertificateSecretId string
 
-////////////////////////////////////////////////////////////////////////////////
-///// Resource Group
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  location: location
-  name: resourceGroupName
-}
-///// Resource Group
-////////////////////////////////////////////////////////////////////////////////
+param clusterAdminName string
+param sshRSAPublicKey string
 
-module mi 'modules/managed-identities.bicep' = {
-  scope: resourceGroup(rg.name)
-  name: 'managed-identities'
-  params: {
-    location: location
-    envName: envName
-  }
-}
-
-module kv 'modules/keyvault.bicep' = {
-  scope: resourceGroup(rg.name)
-  name: 'keyvault'
-  params: {
-    location: location
-    envName: envName
-    objectIdOfUser: objectIdOfUser
-  }
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Module: API Management
 module apim 'modules/apim.bicep' = {
-  scope: resourceGroup(rg.name)
+  scope: resourceGroup()
   name: 'azure-api-management'
   params: {
     location: location
     envName: envName
     apimPublisherEmail: apimPublisherEmail
     apimPublisherName: apimPublisherName
-    initRun: initRun
     mgmtCertExpiry: mgmtCertExpiry
     mgmtCertSubject: mgmtCertSubject
     mgmtCertThumbprint: mgmtCertThumbprint
@@ -100,7 +72,58 @@ module apim 'modules/apim.bicep' = {
     scmCertSubject: scmCertSubject
     scmCertThumbprint: scmCertThumbprint
     scmCertId: scmCertId
+    configCertExpiry: configCertExpiry
+    configCertSubject: configCertSubject
+    configCertThumbprint: configCertThumbprint
+    configCertId: configCertId
   }
 }
 ///// Module: API Management
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+///// Module: Application Gateway
+
+module appgw 'modules/appgw.bicep' = {
+  scope: resourceGroup()
+  name: 'azure-application-gateway'
+  params: {
+    location: location
+    envName: envName
+    configEndpointCertificateSecretId: configEndpointCertificateSecretId
+  }
+}
+
+///// Module: Application Gateway
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+///// Module: vnet
+module aksVnet 'modules/aks-vnet.bicep' = {
+  scope: resourceGroup()
+  name: 'aks-vnet'
+  params: {
+    location: location 
+    envName: envName
+  }
+}
+///// Module: vnet
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+///// Module: AKS
+module aks 'modules/aks.bicep' = {
+  scope: resourceGroup()
+  name: 'aks'
+  dependsOn: [
+    aksVnet
+  ]
+  params: {
+    location: location
+    envName: envName
+    linuxAdminUsername: clusterAdminName
+    sshRSAPublicKey: sshRSAPublicKey
+  }
+}
+///// Module: AKS
 ////////////////////////////////////////////////////////////////////////////////

@@ -3,14 +3,9 @@ param apimCapacity int = 1
 param apimSku string = 'Developer'
 param apimPublisherEmail string
 param apimPublisherName string
-param initRun bool
 
 // A name for the environment that will be prefix, suffix or any other part of the name of the resources
-param envName string = 'pluto'
-param vnetPrefixes array = [
-  '10.20.0.0/16'
-]
-param apimSubnetPrefix string = '10.20.0.0/24'
+param envName string
 
 param mgmtCertExpiry string
 param mgmtCertSubject string
@@ -37,110 +32,19 @@ param scmCertSubject string
 param scmCertThumbprint string
 param scmCertId string
 
+param configCertExpiry string
+param configCertSubject string
+param configCertThumbprint string
+param configCertId string
 
-var vnetName = '${envName}-vnet'
-var apimSubnetName = 'apim-subnet'
-var saDevPortalName = '${envName}devportal'
 var apimInstanceName = '${envName}-apim'
 
 resource apimMi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = { 
   name: '${envName}-apim-identity'
 }
 
-resource nsgApimSubnet 'Microsoft.Network/networkSecurityGroups@2022-11-01' = {
-  name: '${envName}-apim-nsg'
-  location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'allow-inbound-to-mgmt-endpoint'
-        properties: {
-          priority: 100
-          access: 'Allow'
-          direction: 'Inbound'
-          protocol: 'Tcp'
-          sourceAddressPrefix: 'ApiManagement'
-          sourcePortRange: '*'
-          destinationAddressPrefix: 'VirtualNetwork'
-          destinationPortRange: '3443'
-        }
-      }
-      {
-        name: 'allow-inbound-to-load-balancer'
-        properties: {
-          priority: 101
-          access: 'Allow'
-          direction: 'Inbound'
-          protocol: 'Tcp'
-          sourceAddressPrefix: 'AzureLoadBalancer'
-          sourcePortRange: '*'
-          destinationAddressPrefix: 'VirtualNetwork'
-          destinationPortRange: '6390'
-        }
-      }
-      {
-        name: 'allow-outbound-to-storage'
-        properties: {
-          priority: 102
-          access: 'Allow'
-          direction: 'Outbound'
-          protocol: 'Tcp'
-          sourceAddressPrefix: 'VirtualNetwork'
-          sourcePortRange: '*'
-          destinationAddressPrefix: 'Storage'
-          destinationPortRange: '443'
-        }
-      }
-      {
-        name: 'allow-outbound-to-sql'
-        properties: {
-          priority: 103
-          access: 'Allow'
-          direction: 'Outbound'
-          protocol: 'Tcp'
-          sourceAddressPrefix: 'VirtualNetwork'
-          sourcePortRange: '*'
-          destinationAddressPrefix: 'SQL'
-          destinationPortRange: '1443'
-        }
-      }
-      {
-        name: 'allow-outbound-to-keyvault'
-        properties: {
-          priority: 104
-          access: 'Allow'
-          direction: 'Outbound'
-          protocol: 'Tcp'
-          sourceAddressPrefix: 'VirtualNetwork'
-          sourcePortRange: '*'
-          destinationAddressPrefix: 'AzureKeyVault'
-          destinationPortRange: '443'
-        }
-      }
-    ]
-  }
-}
-
-// Virtual network for the APIM
-resource vnet 'Microsoft.Network/virtualNetworks@2022-09-01' = {
-  name: vnetName
-  location: location
-  properties: {
-    addressSpace: {
-      addressPrefixes:vnetPrefixes
-    }
-    subnets: [
-      {
-        name: apimSubnetName
-        properties:{
-          addressPrefix: apimSubnetPrefix
-          networkSecurityGroup: {
-            id: nsgApimSubnet.id
-          }
-        }
-      }
-    ]
-  }
+resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' existing = {
+  name: '${envName}-vnet'
 }
 
 resource publicIpApim 'Microsoft.Network/publicIPAddresses@2022-09-01' = {
@@ -155,16 +59,6 @@ resource publicIpApim 'Microsoft.Network/publicIPAddresses@2022-09-01' = {
   sku: {
     name: 'Standard'
   }
-}
-
-// Storage Account for the Developer Portal Static Web App
-resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
-  name: saDevPortalName
-  location: location
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'StorageV2'
 }
 
 // API Management
@@ -191,7 +85,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-12-01-preview' = {
     publicIpAddressId: publicIpApim.id
     // when running this the first time, there are no certificates in key vault. So only create hostnames when
     // running this for the second time and onwards
-    hostnameConfigurations: initRun ? [] : [
+    hostnameConfigurations: [
       {
         hostName: 'mgmt-apim.${envName}.peterlabs.net'
         type: 'Management'
@@ -252,6 +146,18 @@ resource apim 'Microsoft.ApiManagement/service@2021-12-01-preview' = {
         identityClientId: apimMi.properties.clientId
         keyVaultId: scmCertId
       }
+      // { Comes with API 2023-03-01-preview
+      //   hostName: 'config-apim.${envName}.peterlabs.net'
+      //   type: 'ConfigurationApi'
+      //   certificate: {
+      //     expiry: configCertExpiry
+      //     subject: configCertSubject
+      //     thumbprint: configCertThumbprint
+      //   }
+      //   certificateSource: 'KeyVault'
+      //   identityClientId: apimMi.properties.clientId
+      //   keyVaultId: configCertId
+      // }
     ]
   }
 }
