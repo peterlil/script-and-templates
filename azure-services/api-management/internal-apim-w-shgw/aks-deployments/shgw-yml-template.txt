@@ -7,7 +7,6 @@ metadata:
   labels:
     app: #envName#-gateway
 data:
-  #config.service.endpoint: "#envName#-apim.configuration.azure-api.net"
   config.service.endpoint: "#envName#-configuration.peterlabs.net"
   neighborhood.host: "#envName#-gateway-instance-discovery"
   runtime.deployment.artifact.source: "Azure Portal"
