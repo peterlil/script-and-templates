@@ -1,0 +1,114 @@
+# NOTE: Before deploying to a production environment, please review the documentation -> https://aka.ms/self-hosted-gateway-production
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: #envName#-gateway-env
+  labels:
+    app: #envName#-gateway
+data:
+  #config.service.endpoint: "#envName#-apim.configuration.azure-api.net"
+  config.service.endpoint: "#envName#-configuration.peterlabs.net"
+  neighborhood.host: "#envName#-gateway-instance-discovery"
+  runtime.deployment.artifact.source: "Azure Portal"
+  runtime.deployment.mechanism: "YAML"
+  runtime.deployment.orchestrator.type: "Kubernetes"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: #envName#-gateway
+  labels:
+    app: #envName#-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: #envName#-gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 25%
+  template:
+    metadata:
+      labels:
+        app: #envName#-gateway
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: #envName#-gateway
+        image: mcr.microsoft.com/azure-api-management/gateway:v2
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8081
+          # Container port used for rate limiting to discover instances
+        - name: rate-limit-dc
+          protocol: UDP
+          containerPort: 4290
+          # Container port used for instances to send heartbeats to each other
+        - name: dc-heartbeat
+          protocol: UDP
+          containerPort: 4291
+        readinessProbe:
+          httpGet:
+            path: /status-0123456789abcdef
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        env:
+        - name: config.service.auth
+          valueFrom:
+            secretKeyRef:
+              name: #envName#-gateway-token
+              key: value
+        envFrom:
+        - configMapRef:
+            name: #envName#-gateway-env
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: #envName#-gateway-live-traffic
+  labels:
+    app: #envName#-gateway
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  - name: https
+    port: 443
+    targetPort: 8081
+  selector:
+    app: #envName#-gateway
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: #envName#-gateway-instance-discovery
+  labels:
+    app: #envName#-gateway
+  annotations:
+    azure.apim.kubernetes.io/notes: "Headless service being used for instance discovery of self-hosted gateway"
+spec:
+  clusterIP: None
+  type: ClusterIP
+  ports:
+  - name: rate-limit-discovery
+    port: 4290
+    targetPort: rate-limit-dc
+    protocol: UDP
+  - name: discovery-heartbeat
+    port: 4291
+    targetPort: dc-heartbeat
+    protocol: UDP
+  selector:
+    app: #envName#-gateway
