@@ -1,5 +1,7 @@
 # Provision a private AKS cluster
 
+Below steps are to be performed in bash.
+
 ## Sign in to Azure
 
 ```bash
