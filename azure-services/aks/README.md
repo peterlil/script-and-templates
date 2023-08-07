@@ -1,4 +1,4 @@
-# Provision a private AKS cluster
+# Provision an AKS cluster with private nodes and public control plane
 
 Below steps are to be performed in bash.
 
@@ -129,6 +129,8 @@ az role assignment create \
     --assignee $(echo $realIngressAppGwIdentity | jq -r '.principalId')
 
 // UGLY: Refresh the credentials by restarting the cluster
+az aks stop --resource-group $resourceGroupName --name $clusterName
+az aks start --resource-group $resourceGroupName --name $clusterName
 
 # Get the credentials for kubectl
 az aks get-credentials --resource-group $resourceGroupName --name $clusterName --overwrite-existing
