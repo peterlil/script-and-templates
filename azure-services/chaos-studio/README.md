@@ -8,6 +8,7 @@ Then I enabled Chaos Studio on the AKS cluster in the portal following [this art
 
 
 ```bash
+alias k=kubectl
 aksResourceGroup=chaos-tests
 location=swedencentral
 clusterName=chaos-cluster
@@ -47,7 +48,7 @@ helm repo update
 kubectl create ns chaos-testing
 helm install chaos-mesh chaos-mesh/chaos-mesh --namespace=chaos-testing --set chaosDaemon.runtime=containerd --set chaosDaemon.socketPath=/run/containerd/containerd.sock
 
-kubectl get po -n chaos-testing
+kubectl get pods -n chaos-testing
 
 
 SUBSCRIPTION_ID="<sub-id>"
@@ -68,9 +69,27 @@ az role assignment create --role "Azure Kubernetes Service Cluster Admin Role" -
 kubectl scale --replicas=2 deployment/azure-vote-front
 kubectl scale --replicas=2 deployment/azure-vote-back
 
-k get pods
+# install and configure hey
+wget -o hey https://hey-release.s3.us-east-2.amazonaws.com/hey_linux_amd64
+mv hey ~
 
-k get svc -A
+
+
+kubectl get pods -n azure-vote-front
+kubectl get pods -n azure-vote-back
+
+
+tmux \
+    new-session  -d 'echo "Pane 1" ; bash' \; \
+    split-window -v 'kubectl get pods -n azure-vote-front --watch' \; \
+    split-window -h 'kubectl get pods -n azure-vote-back --watch' \; \
+    attach-session -d
+
+kubectl get svc -A
+
+
+tmux list-sessions
+tmux kill-session -t 1
 
 ```
 
