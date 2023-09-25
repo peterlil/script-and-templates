@@ -1,0 +1,4 @@
+{
+	"name": "PowerShell",
+	"image": "mcr.microsoft.com/powershell:ubuntu-22.04"
+}
