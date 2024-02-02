@@ -153,6 +153,12 @@ git ls-files -i -c --exclude-from=.gitignore | xargs git rm --cached
 git ls-files -i -c --exclude-from=.gitignore | %{git rm --cached $_}
 ```
 
+## Make a shell script executable
+
+```shell
+git update-index --chmod=+x .\filename.sh
+```
+
 # Authentication issues
 
 ## Fix when git has lost auth token for Enterprise account
