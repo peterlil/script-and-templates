@@ -163,7 +163,7 @@ git update-index --chmod=+x .\filename.sh
 
 ```bash
 git reset --hard origin/main
-git clean -fd
+git clean -fdX
 ```
 
 # Authentication issues
