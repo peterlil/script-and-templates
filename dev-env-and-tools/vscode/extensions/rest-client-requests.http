@@ -1,0 +1,37 @@
+
+POST http://echoapi.cloudapp.net/api/resource HTTP/1.1
+Host: echoapi.cloudapp.net
+Content-Type: application/json
+
+"{\r\n\t\"vehicleType\": \"train\",\r\n\t\"maxSpeed\": 125,\r\n\t\"avgSpeed\": 90,\r\n\t\"speedUnit\": \"mph\"\r\n}"
+
+###
+
+POST https://apim-peterlil.azure-api.net/echo/resource HTTP/1.1
+Host: apim-peterlil.azure-api.net
+Content-Type: application/json
+ocp-apim-subscription-key: 
+
+"{\r\n\t\"vehicleType\": \"train\",\r\n\t\"maxSpeed\": 125,\r\n\t\"avgSpeed\": 90,\r\n\t\"speedUnit\": \"mph\"\r\n}"
+
+###
+GET http://echoapi.cloudapp.net/api/resource?name=peter HTTP/1.1
+Host: echoapi.cloudapp.net
+
+
+###
+
+GET https://shgw.peterlabs.net/api/echo/resource?name=peter HTTP/1.1
+Host: shgw.peterlabs.net
+ocp-apim-subscription-key: 
+
+###
+
+GET https://shgw2.peterlabs.net/api/echo/resource?param1=sample HTTP/1.1
+Host: shgw2.peterlabs.net
+Ocp-Apim-Subscription-Key: 
+Authorization: Bearer 
+
+###
+GET https://www.google.se HTTP/1.1
+Host: www.google.se
