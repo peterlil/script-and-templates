@@ -159,6 +159,13 @@ git ls-files -i -c --exclude-from=.gitignore | %{git rm --cached $_}
 git update-index --chmod=+x .\filename.sh
 ```
 
+## Make your local repo look exactly like a new clone from GitHub
+
+```bash
+git reset --hard origin/main
+git clean -fd
+```
+
 # Authentication issues
 
 ## Fix when git has lost auth token for Enterprise account
