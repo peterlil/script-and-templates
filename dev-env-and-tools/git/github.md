@@ -6,6 +6,12 @@ You can replace <code>\`</code> with <code>\<code\></code> tags and, use `&nbsp;
 
 For code blocks use <code>\<pre\></code> tags instead of <code>```</code>.
 
+## Generate an SSH key for a specific GitHub user
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f ~/.ssh/custom_key
+```
+
 ## Set SSH key to use for local repo
 
 ```bash
