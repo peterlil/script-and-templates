@@ -40,6 +40,14 @@ git config -l --global
 git config -l --system
 ```
 
+## Clone a repo
+
+### Clone a repo and specifying which SSH key to use
+
+```bash
+GIT_SSH_COMMAND='ssh -i /path/to/your/private_key' git clone git@github.com:username/repository.git
+```
+
 ## Revert `git add`
 
 ```bash
