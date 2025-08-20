@@ -1,0 +1,19 @@
+﻿@page
+@model ServerNameWeb.Pages.IndexModel
+@{
+    ViewData["Title"] = "Server Name Lookup";
+}
+
+<h1>Server Name Lookup</h1>
+
+<form method="post">
+    <label for="fqdn">Server FQDN or Hostname:</label>
+    <input type="text" id="fqdn" name="Fqdn" value="@Model.Fqdn" />
+    <button type="submit">Get Server Name</button>
+</form>
+
+@if (Model.ServerName != null)
+{
+    <h2>Response:</h2>
+    <p>@Model.ServerName</p>
+}
