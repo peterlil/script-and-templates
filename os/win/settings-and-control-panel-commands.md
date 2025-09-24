@@ -102,7 +102,7 @@ Windows Defender Firewall Allowed apps | explorer shell:::{4026492F-2F69-46B8-B9
 Windows Defender Firewall with Advanced Security | %WinDir%\System32\WF.msc
 Windows Features | %windir%\System32\OptionalFeatures.exe <br/> OR <br/> rundll32.exe shell32.dll,Control_RunDLL appwiz.cpl,,2
 Windows Mobility Center | control /name Microsoft.MobilityCenter
-Windows Update | control update
+Windows Update | ms-settings:windowsupdate<br>control update
 Work Folders | %windir%\System32\WorkFolders.exe
 
 
