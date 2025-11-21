@@ -68,7 +68,40 @@ git reset --soft HEAD~1
 git branch
 ```
 
-## Create a branch
+## Branches
+
+### List brances
+
+List local branches
+
+```powershell
+git branch
+```
+
+List remote branches
+
+```powershell
+git branch -r
+```
+
+You scroll down with `<Down Arrow>` and quit with `q`.
+
+### Switch branch
+
+Switch to a local branch.
+
+```powershell
+git checkout <branchname>
+```
+
+Switch to a branch from the remote. Remember to run `git pull` to get a list of all branches from the remote first. 
+
+```powershell
+git pull
+git checkout --track origin/<my-branch-name>
+```
+
+### Create a branch
 
 Create a branch locally.
 
@@ -88,7 +121,7 @@ Create a branch in the remote (by pushing from local)
 git push -u <remote-name> <branch-name>
 ```
 
-## Delete a local branch
+### Delete a local branch
 
 It's common to want to delete a local branch, for instance after a pull request.
 
