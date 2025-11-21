@@ -212,6 +212,30 @@ function Set-SshProfile {
         Write-Host "❌ SSH profile '$Name' activation failed for $account." -ForegroundColor Red
     }
 }
+
+function List-SshProfiles {
+    $sshDir = Join-Path -Path $env:USERPROFILE -ChildPath ".ssh"
+    
+    # Quit if the .ssh directory does not exist
+    if (-not (Test-Path -Path $sshDir)) {
+        Write-Error "The .ssh directory does not exist in your user profile."
+        return
+    }
+
+    # Get all private key files matching the pattern
+    $privateKeys = Get-ChildItem -Path $sshDir -Filter "id_rsa-*" | Where-Object { -not $_.Name.EndsWith(".pub") }
+
+    if ($privateKeys.Count -eq 0) {
+        Write-Host "No SSH profiles found."
+        return
+    }
+
+    Write-Host "Available SSH Profiles:" -ForegroundColor Cyan
+    foreach ($key in $privateKeys) {
+        $profileName = $key.Name -replace "^id_rsa-", ""
+        Write-Host "- $profileName"
+    }
+}
 #endregion
 
 
