@@ -352,5 +352,9 @@ function Update-Windows {
 #endregion
 
 function Add-LocalRoutes {
+    route add 192.168.1.0 mask 255.255.255.0 192.168.3.1
+    route add 192.168.2.0 mask 255.255.255.0 192.168.3.1
+    route add 192.168.4.0 mask 255.255.255.0 192.168.3.1
     route add 192.168.5.0 mask 255.255.255.0 192.168.3.1
+    route add 192.168.7.0 mask 255.255.255.0 192.168.3.1
 }
