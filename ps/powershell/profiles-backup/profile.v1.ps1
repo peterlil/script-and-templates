@@ -298,6 +298,98 @@ function Backup-Profile {
 # ================================
 <#
 .SYNOPSIS
+    Lists VS Code extensions that have updates available.
+.DESCRIPTION
+    This function queries the VS Code marketplace to check which installed extensions have newer versions available.
+.EXAMPLE
+    Get-VSCodeExtensionUpdates
+.NOTES
+    Requires VS Code CLI (code or code-insiders) to be in PATH and internet connectivity to query the marketplace.
+#>
+function Get-VSCodeExtensionUpdates {
+    try {
+        # Determine which VS Code CLI is available
+        $codeCmd = if (Get-Command code-insiders -ErrorAction SilentlyContinue) { 'code-insiders' } 
+                   elseif (Get-Command code -ErrorAction SilentlyContinue) { 'code' }
+                   else { 
+                       Write-Host "VS Code CLI not found in PATH." -ForegroundColor Red
+                       return
+                   }
+
+        Write-Host "Checking for extension updates..." -ForegroundColor Cyan
+        
+        # Get all installed extensions with versions
+        $installed = & $codeCmd --list-extensions --show-versions | ForEach-Object {
+            $parts = $_ -split '@'
+            [PSCustomObject]@{
+                Id = $parts[0]
+                InstalledVersion = $parts[1]
+            }
+        }
+
+        if (-not $installed) {
+            Write-Host "No extensions installed." -ForegroundColor Yellow
+            return
+        }
+
+        Write-Host "Checking $($installed.Count) extensions against marketplace..." -ForegroundColor Cyan
+        
+        $updatesAvailable = @()
+        
+        foreach ($ext in $installed) {
+            try {
+                # Query the VS Code marketplace API for latest version
+                $publisher, $extensionName = $ext.Id -split '\.'
+                $url = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery"
+                
+                $body = @{
+                    filters = @(
+                        @{
+                            criteria = @(
+                                @{ filterType = 7; value = $ext.Id }
+                            )
+                            pageSize = 1
+                        }
+                    )
+                    flags = 0x192
+                } | ConvertTo-Json -Depth 10
+                
+                $headers = @{
+                    'Content-Type' = 'application/json'
+                    'Accept' = 'application/json;api-version=3.0-preview.1'
+                }
+                
+                $response = Invoke-RestMethod -Uri $url -Method Post -Body $body -Headers $headers -ErrorAction Stop
+                
+                if ($response.results[0].extensions.Count -gt 0) {
+                    $latestVersion = $response.results[0].extensions[0].versions[0].version
+                    
+                    if ($latestVersion -ne $ext.InstalledVersion) {
+                        $updatesAvailable += [PSCustomObject]@{
+                            Extension = $ext.Id
+                            Installed = $ext.InstalledVersion
+                            Latest = $latestVersion
+                        }
+                    }
+                }
+            } catch {
+                Write-Host "  Warning: Could not check $($ext.Id)" -ForegroundColor Yellow
+            }
+        }
+        
+        if ($updatesAvailable.Count -eq 0) {
+            Write-Host "`nAll extensions are up to date!" -ForegroundColor Green
+        } else {
+            $updatesAvailable | ForEach-Object { $_.Extension }
+        }
+        
+    } catch {
+        Write-Host "Error retrieving extensions: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+<#
+.SYNOPSIS
     Runs Windows Update and installs all available updates.
 .DESCRIPTION
     This function uses the PSWindowsUpdate module to check for, download, and install all available Windows updates.
@@ -352,9 +444,46 @@ function Update-Windows {
 #endregion
 
 function Add-LocalRoutes {
+    route delete 192.168.1.0
+    route delete 192.168.2.0
+    route delete 192.168.4.0
+    route delete 192.168.5.0
+    route delete 192.168.7.0
     route add 192.168.1.0 mask 255.255.255.0 192.168.3.1
     route add 192.168.2.0 mask 255.255.255.0 192.168.3.1
     route add 192.168.4.0 mask 255.255.255.0 192.168.3.1
     route add 192.168.5.0 mask 255.255.255.0 192.168.3.1
     route add 192.168.7.0 mask 255.255.255.0 192.168.3.1
+}
+
+function Get-KeyVaultSecretToClipboard {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, HelpMessage="Name of the secret.")]
+        [Alias('n')]
+        [string]$name,
+        [Parameter(Mandatory=$false)][string]$subscriptionId,
+        [Parameter(Mandatory=$false)][string]$keyVaultName
+    )
+    
+    # If subscriptionId is not provided, get id from the env variable PersonalAzureSubscriptionId
+    if (-not $subscriptionId) {
+        $subscriptionId = $env:PersonalAzureSubscriptionId
+    }
+
+    # If keyVaultName is not provided, get it from the env variable PersonalKeyVaultName
+    if (-not $keyVaultName) {
+        $keyVaultName = $env:PersonalKeyVaultName
+    }
+
+    $value = az keyvault secret show -n $name `
+        --subscription $subscriptionId `
+        --vault-name $keyVaultName `
+        --query "value" `
+        -o tsv
+
+    Set-Clipboard -Value $value
+
+    Write-Host "Secret added to clipboard"
+
 }
