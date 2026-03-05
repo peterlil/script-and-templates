@@ -62,6 +62,30 @@ To undo the last commit, and preserve the files in the current repo so you don't
 git reset --soft HEAD~1
 ```
 
+## Squash changes that are pushed to remote
+
+To squash changes that has been pushed to the remote, do the following:
+
+```powershell
+# Make sure you do not have any changes that are not tracked, if so stash them.
+git status
+
+
+# Do an interactive rebase, make sure all commits you want to squash is in the list, 
+# and have at least one commit you want to keep before the series of commits to be squashed.
+# Replace <n> with the number of commits you need to see
+git rebase -i HEAD~<n>
+
+# In the editor, change pick -> squash for all commits you want to squash.
+# Save and close the file.
+# Git will ask to combine commit messages
+# Delete everything you don’t want and create one clean message for the squashed commit.
+# Save and exit.
+
+# Force-push the updated history to GitHub
+git push --force
+```
+
 ## List local branches
 
 ```powershell
