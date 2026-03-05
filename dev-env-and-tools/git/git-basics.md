@@ -171,22 +171,15 @@ git pull origin my-feature-branch
 git push
 ```
 
-### Sync remote main with local main
-
-```shell
-# Get the changes into the local branch
-git pull origin main
-# Push the branch changes to the github rep
-git push
-```
-
 ### Sync local feature branch with local main
 
 ```shell
-# Get the changes into the local branch
-git pull main my-feature-branch
-# Push the branch changes to the github rep
-git push
+# First make sure you have the latest main locally, this updates the remote-tracking branches like origin/main
+git fetch original
+# Switch to your feature branch if you are not already there
+git switch my-feature-branch
+# Merge main into the feature branch
+git merge origin/main
 ```
 
 
