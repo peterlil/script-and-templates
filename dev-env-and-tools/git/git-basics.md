@@ -160,7 +160,18 @@ git rm --cached <path-to-file>
 git commit -m "Remove file <file> from git."
 ```
 
-## Sync remote main with local feature branch
+## Sync branches
+
+### Sync remote main with local feature branch
+
+```shell
+# Get the changes into the local branch
+git pull origin my-feature-branch
+# Push the branch changes to the github rep
+git push
+```
+
+### Sync remote main with local main
 
 ```shell
 # Get the changes into the local branch
@@ -168,6 +179,16 @@ git pull origin main
 # Push the branch changes to the github rep
 git push
 ```
+
+### Sync local feature branch with local main
+
+```shell
+# Get the changes into the local branch
+git pull main my-feature-branch
+# Push the branch changes to the github rep
+git push
+```
+
 
 ## Committed to main when you really wanted to work in a branch?
 
