@@ -6,24 +6,67 @@ function Invoke-RelogPerfmonTraceFiles {
         [string]$TraceFileSearchPattern = '.\*.tsv',
 
         # Output path for resulting files
-        [string]$OutputPath = ''
+        [string]$OutputPath = '',
+
+        # Optional path to a pre-generated counter file for relog.exe -cf
+        [string]$CounterFile = '',
+
+        # Output format for relog.exe. Defaults to binary log format.
+        [ValidateSet('blg', 'tsv')]
+        [string]$OutputFormat = 'blg'
     )
     
     ### Load trace files matching the search pattern
     $traceFiles = Get-Item $TraceFileSearchPattern
+
+    ### Validate OutputPath if supplied
+    if ($OutputPath) {
+        if (-not (Test-Path -Path $OutputPath -PathType Container)) {
+            throw "OutputPath '$OutputPath' does not exist or is not a folder."
+        }
+    }
+
+    if ($CounterFile) {
+        if (-not (Test-Path -Path $CounterFile -PathType Leaf)) {
+            throw "Counter file '$CounterFile' does not exist."
+        }
+        $counterNamesFile = $CounterFile
+        Write-Verbose "Using supplied counter file '$counterNamesFile'"
+    }
+    else {
+        ### Extract counter names from the first trace file and save to a temporary file
+        $counterNamesFile = [System.IO.Path]::GetTempFileName()
+        Write-Verbose "Extracting counter names from '$($traceFiles[0].FullName)' to '$counterNamesFile'"
+        Get-PerfmonTraceCounters -Path $traceFiles[0].FullName -OutputFile $counterNamesFile
+    }
     
-    ### Extract counter names from the first trace file and save to a temporary file
-    $counterNamesFile = [System.IO.Path]::GetTempFileName()
-    Write-Verbose "Extracting counter names from '$($traceFiles[0].FullName)' to '$counterNamesFile'"
-    Get-PerfmonTraceCounters -Path $traceFiles[0].FullName -OutputFile $counterNamesFile
     
-    
-    ### Migrate tsv-format files to binary format
+    # Map user-friendly format to relog format argument and output extension
+    $relogFormat = if ($OutputFormat -eq 'blg') { 'bin' } else { 'tsv' }
+    $outputExtension = if ($OutputFormat -eq 'blg') { '.blg' } else { '.tsv' }
+
+    ### Migrate trace files to requested format
     $binFiles = @()
+    $overwriteAll = $false
     $traceFiles | ForEach-Object {
-        $newFilename = Join-Path $_.DirectoryName ($_.BaseName + '.blg')
+        $outputDir   = if ($OutputPath) { $OutputPath } else { $_.DirectoryName }
+        $newFilename = Join-Path $outputDir ($_.BaseName + '-relogged' + $outputExtension)
+
+        # Prompt if destination already exists (unless user already chose Overwrite All)
+        if ((Test-Path -Path $newFilename -PathType Leaf) -and -not $overwriteAll) {
+            Write-Host "Destination file already exists: $newFilename" -ForegroundColor Yellow
+            $choice = Read-Host 'Action? [O] Overwrite  [A] Overwrite All  [Q] Abort'
+            switch ($choice.Trim().ToUpper()) {
+                'O' { <# overwrite this one file #> }
+                'A' { $overwriteAll = $true }
+                'Q' { throw 'Operation aborted by user.' }
+                default { throw "Unknown choice '$choice'. Operation aborted." }
+            }
+        }
+
         Write-Verbose "Relogging '$($_.FullName)' to '$newFilename'"
-        relog.exe $_.FullName -f bin -o $newFilename -cf $counterNamesFile
+        # -y tells relog.exe to overwrite silently; we handle the prompt ourselves above
+        relog.exe $_.FullName -f $relogFormat -o $newFilename -y -cf $counterNamesFile
         $checkFile = Get-Item -Path $newFilename -ErrorAction SilentlyContinue
         # The 'last' file is most often locked as the performance trace is running. Then no output file is created.
         if( $checkFile ) {
@@ -110,7 +153,53 @@ param(
         }
     }
 }
-        
+
+function Invoke-ExtractCountersFromPerfmonTrace {
+    [CmdletBinding()]
+    param(
+        # Search pattern for .tsv trace files, e.g. 'C:\PerfLogs\Admin\VM Performance Trace\*.tsv'
+        [string]$TraceFileSearchPattern = '.\*.tsv',
+
+        # Output path for resulting files
+        [string]$OutputPath = ''
+    )
+    
+    ### Load trace files matching the search pattern
+    $traceFiles = Get-Item $TraceFileSearchPattern
+    
+    ### Extract counter names from the first trace file and save to the specified output file
+    $counterNamesFile = if ($OutputPath) { $OutputPath } else { [System.IO.Path]::GetTempFileName() }
+    Write-Verbose "Extracting counter names from '$($traceFiles[0].FullName)' to '$counterNamesFile'"
+    Get-PerfmonTraceCounters -Path $traceFiles[0].FullName -OutputFile $counterNamesFile
+    
+}
+
         
 # Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern 'c:\l\pe\cx\SEB\traces-and-logs\1\*.tsv' -Verbose
 # relog.exe 'c:\l\pe\cx\SEB\traces-and-logs\SEB-SQLPR-04-20260219-0001.tsv' -f bin -o 'c:\l\pe\cx\SEB\traces-and-logs\SEB-SQLPR-04-20260219-0001.blg' -cf 'c:\Users\liljepet\AppData\Local\Temp\tmpm0epvr.tmp'
+#Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern 'C:\l\temp\clo-traces-20260522\*.tsv' -Verbose
+
+# Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern 'c:\l\temp\clo-traces-20260522\05.29\*.tsv' -Verbose
+# Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern 'C:\l\temp\clo-traces-20260522\05.29\AZS-CLOKTST-13-20260529-0025.tsv' -Verbose
+# Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern 'C:\l\temp\clo-traces-20260522\05.29\AZS-CLOSTST-13-20260529-0015.tsv' -Verbose
+
+# Invoke-ExtractCountersFromPerfmonTrace -TraceFileSearchPattern 'c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260605-0039.tsv' -OutputPath 'c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260605-0039-counters.txt' -Verbose
+
+
+# Usage examples:
+# 
+# Existing behavior (auto-extract counters):
+# Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern "C:\PerfLogs\Admin\VM Performance Trace*.tsv" -Verbose
+# New behavior (use supplied counter file):
+# Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern "C:\PerfLogs\Admin\VM Performance Trace*.tsv" -CounterFile "C:\temp\counters.txt" -OutputFormat tsv -Verbose
+
+# Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern "c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260605-0039.tsv" -CounterFile "c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260605-0039-counters.txt" -OutputFormat tsv -Verbose
+# Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern "c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260607-*.tsv" -OutputPath "c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260607-0000" -CounterFile "c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260606-0000-counters.txt" -OutputFormat blg -Verbose
+
+# Relog all counters in selected files and make them binary
+Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern "c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260606-*.tsv" `
+    -OutputPath "c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260606-0001" `
+    -OutputFormat blg -Verbose
+#Invoke-RelogPerfmonTraceFiles -TraceFileSearchPattern "c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260607-*.tsv" `
+#    -OutputPath "c:\l\temp\clo-traces-20260522\AZS-CLOSTST-13-20260607-0001" `
+#    -OutputFormat blg -Verbose

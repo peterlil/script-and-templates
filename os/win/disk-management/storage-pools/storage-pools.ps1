@@ -40,3 +40,40 @@ Get-StoragePool -FriendlyName datafiles | Get-ResiliencySetting
 Get-StoragePool -FriendlyName datafiles | Format-List *
 
 
+# Script below creates a storage pool from a hardcoded set of DiskNumber values.
+
+# Creating Storage Pool from hardcoded Get-Disk numbers
+$DiskNumbers = @(2, 3, 7, 8)
+$SPFnHardcoded = "datafiles-hardcoded"
+
+$Storage = Get-StorageSubSystem
+$allPhysicalDisks = Get-PhysicalDisk
+
+$SelectedPhysicalDisks = foreach ($diskNumber in $DiskNumbers) {
+    $msftDisk = Get-CimInstance -Namespace root/microsoft/windows/storage -ClassName MSFT_Disk -Filter "Number=$diskNumber" -ErrorAction SilentlyContinue
+    if (-not $msftDisk) {
+        throw "DiskNumber '$diskNumber' was not found."
+    }
+
+    $associatedPhysical = Get-CimAssociatedInstance -InputObject $msftDisk -ResultClassName MSFT_PhysicalDisk -ErrorAction SilentlyContinue
+    if (-not $associatedPhysical) {
+        throw "DiskNumber '$diskNumber' could not be mapped to a physical disk."
+    }
+
+    foreach ($pd in $associatedPhysical) {
+        $match = $allPhysicalDisks | Where-Object { $_.UniqueId -eq $pd.UniqueId }
+        if ($match) { $match }
+    }
+}
+
+$SelectedPhysicalDisks = $SelectedPhysicalDisks | Sort-Object UniqueId -Unique
+$NotPoolable = $SelectedPhysicalDisks | Where-Object { -not $_.CanPool }
+if ($NotPoolable) {
+    throw "One or more selected disks are not poolable: $($NotPoolable.FriendlyName -join ', ')"
+}
+
+if ($SelectedPhysicalDisks.Count -ne $DiskNumbers.Count) {
+    throw "Expected $($DiskNumbers.Count) physical disks from DiskNumber list, found $($SelectedPhysicalDisks.Count)."
+}
+
+New-StoragePool -FriendlyName $SPFnHardcoded -StorageSubSystemUniqueId $Storage.UniqueId -PhysicalDisks $SelectedPhysicalDisks
